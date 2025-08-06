@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:MatchMemoApp.ViewModels"
+             xmlns:model="clr-namespace:MatchMemoApp.Models"
+             x:Class="MatchMemoApp.Views.MainPage"
+             x:DataType="viewmodel:MainViewModel"
+             Title="{Binding Title}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <RefreshView Grid.Row="0" 
+                     Command="{Binding GetMatchesCommand}"
+                     IsRefreshing="{Binding IsBusy}">
+            <CollectionView ItemsSource="{Binding Matches}"
+                          SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="model:Match">
+                        <Grid Padding="15">
+                            <Frame BackgroundColor="White"
+                                   HasShadow="True"
+                                   CornerRadius="10">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer 
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MainViewModel}}, Path=GoToMatchCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Frame.GestureRecognizers>
+
+                                <Grid Padding="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0"
+                                           Text="{Binding Date, StringFormat='{0:yyyy/MM/dd}'}"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="Black" />
+
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Opponent, StringFormat='vs {0}'}"
+                                           FontSize="16"
+                                           TextColor="Gray" />
+
+                                    <Label Grid.Row="2"
+                                           Text="{Binding Stadium}"
+                                           FontSize="14"
+                                           TextColor="Gray" />
+                                </Grid>
+                            </Frame>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <StackLayout>
+                        <Label Text="試合記録がありません"
+                               FontSize="18"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               TextColor="Gray" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+        
+        <!-- 選手管理ボタン -->
+        <Button Grid.Row="0"
+                Text="選手管理"
+                Command="{Binding GoToPlayerManagementCommand}"
+                BackgroundColor="#007ACC"
+                TextColor="White"
+                CornerRadius="25"
+                WidthRequest="100"
+                HeightRequest="50"
+                HorizontalOptions="Start"
+                VerticalOptions="End"
+                Margin="20" />
+
+        <!-- 新規作成ボタン -->
+        <Button Grid.Row="0"
+                Text="新規メモ"
+                Command="{Binding CreateNewMatchCommand}"
+                BackgroundColor="#007ACC"
+                TextColor="White"
+                CornerRadius="25"
+                WidthRequest="100"
+                HeightRequest="50"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="20" />
+    </Grid>
+</ContentPage>

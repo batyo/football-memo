@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="MatchMemoApp.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MatchMemoApp.Views"
+    Shell.FlyoutBehavior="Disabled">
+
+    <ShellContent
+        Title="Home"
+        ContentTemplate="{DataTemplate local:MainPage}"
+        Route="MainPage" />
+
+    <FlyoutItem Title="ホーム" Icon="home.png">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" Route="MainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="選手管理" Icon="person.png">
+        <ShellContent ContentTemplate="{DataTemplate local:PlayerManagementPage}" Route="PlayerManagementPage" />
+    </FlyoutItem>
+
+</Shell>

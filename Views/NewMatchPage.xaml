@@ -1,0 +1,172 @@
+<?xml version= "1.0" encoding= "UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:MatchMemoApp.ViewModels"
+             xmlns:model="clr-namespace:MatchMemoApp.Models"
+             x:Class="MatchMemoApp.Views.NewMatchPage"
+             x:DataType="viewmodel:NewMatchViewModel"
+             Title="{Binding Title}">
+
+	<ScrollView>
+		<StackLayout Padding="20" Spacing="15">
+
+			<!-- 試合基本情報 -->
+			<Frame BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="15">
+				<StackLayout Spacing="15">
+					<Label Text="試合情報" FontSize="18" FontAttributes="Bold" />
+
+					<StackLayout>
+						<Label Text="日付" />
+						<DatePicker Date="{Binding MatchDate}" />
+					</StackLayout>
+
+					<StackLayout>
+						<Label Text="天気" />
+						<Picker ItemsSource="{Binding WeatherOptions}"
+                                SelectedItem="{Binding Weather}" />
+					</StackLayout>
+
+					<StackLayout>
+						<Label Text="対戦相手" />
+						<Entry Text="{Binding Opponent}"
+                               Placeholder="対戦相手を入力" />
+					</StackLayout>
+
+					<StackLayout>
+						<Label Text="スタジアム" />
+						<Entry Text="{Binding Stadium}"
+                               Placeholder="スタジアム名を入力" />
+					</StackLayout>
+
+					<StackLayout>
+						<Label Text="フォーメーション" />
+						<Picker ItemsSource="{Binding FormationOptions}"
+                                SelectedItem="{Binding SelectedFormation}" />
+					</StackLayout>
+
+					<StackLayout Orientation="Horizontal">
+						<Switch IsToggled="{Binding IsRealTimeMode}" />
+						<Label Text="リアルタイムモード" VerticalOptions="Center" />
+					</StackLayout>
+				</StackLayout>
+			</Frame>
+
+			<!-- フィールドビュー -->
+			<Frame BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="15">
+				<StackLayout>
+					<Label Text="フィールド配置" FontSize="18" FontAttributes="Bold" />
+
+					<!-- フィールド表示 -->
+					<Frame BackgroundColor="#4CAF50" HeightRequest="400" WidthRequest="300"
+                           HorizontalOptions="Center" HasShadow="False" CornerRadius="5">
+						<AbsoluteLayout>
+							<!-- フィールドライン -->
+							<BoxView Color="White" WidthRequest="280" HeightRequest="2"
+                                     AbsoluteLayout.LayoutBounds="140,200,280,2"
+                                     AbsoluteLayout.LayoutFlags="None" />
+
+							<!-- センターサークル -->
+							<Border Stroke="White" StrokeThickness="2" BackgroundColor="Transparent"
+                                    WidthRequest="60" HeightRequest="60"
+                                    AbsoluteLayout.LayoutBounds="140,200,60,60"
+                                    AbsoluteLayout.LayoutFlags="None">
+								<Border.StrokeShape>
+									<Ellipse />
+								</Border.StrokeShape>
+							</Border>
+
+							<!-- ペナルティエリア (上) -->
+							<Rectangle Fill="Transparent" Stroke="White" StrokeThickness="2"
+                                     WidthRequest="120" HeightRequest="80"
+                                     AbsoluteLayout.LayoutBounds="140,40,120,80"
+                                     AbsoluteLayout.LayoutFlags="None" />
+
+							<!-- ペナルティエリア (下) -->
+							<Rectangle Fill="Transparent" Stroke="White" StrokeThickness="2"
+                                     WidthRequest="120" HeightRequest="80"
+                                     AbsoluteLayout.LayoutBounds="140,360,120,80"
+                                     AbsoluteLayout.LayoutFlags="None" />
+
+							<!-- 選手表示 -->
+							<BindableLayout.ItemsSource>
+								<Binding Path="FieldPlayers" />
+							</BindableLayout.ItemsSource>
+							<BindableLayout.ItemTemplate>
+								<DataTemplate x:DataType="viewmodel:FieldPlayer">
+									<Frame BackgroundColor="#2196F3"
+                                           WidthRequest="30" HeightRequest="30"
+                                           CornerRadius="15" HasShadow="True">
+										<Frame.GestureRecognizers>
+											<TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:NewMatchViewModel}}, Path=RemovePlayerFromFieldCommand}"
+                                                CommandParameter="{Binding .}"/>
+										</Frame.GestureRecognizers>
+										<Label Text="{Binding Player.Number}"
+                                               TextColor="White"
+                                               FontSize="12"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center" />
+									</Frame>
+								</DataTemplate>
+							</BindableLayout.ItemTemplate>
+						</AbsoluteLayout>
+					</Frame>
+
+					<Label Text="選手をタップして削除"
+                           FontSize="12"
+                           TextColor="Gray"
+                           HorizontalOptions="Center" />
+				</StackLayout>
+			</Frame>
+
+			<!-- 選手一覧 -->
+			<Frame BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="15">
+				<StackLayout>
+					<Label Text="選手一覧" FontSize="18" FontAttributes="Bold" />
+					<Label Text="選手をタップしてフィールドに追加" FontSize="12" TextColor="Gray" />
+
+					<CollectionView ItemsSource="{Binding AvailablePlayers}"
+                                  MaximumHeightRequest="200">
+						<CollectionView.ItemTemplate>
+							<DataTemplate x:DataType="model:Player">
+								<Grid Padding="10">
+									<Frame BackgroundColor="#F5F5F5" HasShadow="False" CornerRadius="5">
+										<Frame.GestureRecognizers>
+											<TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:NewMatchViewModel}}, Path=AddPlayerToFieldCommand}"
+                                                CommandParameter="{Binding .}"/>
+										</Frame.GestureRecognizers>
+
+										<StackLayout Orientation="Horizontal" Spacing="10">
+											<Label Text="{Binding Number}"
+                                                   FontAttributes="Bold"
+                                                   VerticalOptions="Center" />
+											<Label Text="{Binding Name}"
+                                                   VerticalOptions="Center" />
+											<Label Text="{Binding Position}"
+                                                   TextColor="Gray"
+                                                   VerticalOptions="Center" />
+											<Label Text="{Binding PreferredFoot}"
+                                                   TextColor="Gray"
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="EndAndExpand" />
+										</StackLayout>
+									</Frame>
+								</Grid>
+							</DataTemplate>
+						</CollectionView.ItemTemplate>
+					</CollectionView>
+				</StackLayout>
+			</Frame>
+
+			<!-- 保存ボタン -->
+			<Button Text="試合を作成"
+                    Command="{Binding SaveMatchCommand}"
+                    BackgroundColor="#007ACC"
+                    TextColor="White"
+                    CornerRadius="10"
+                    HeightRequest="50" />
+
+		</StackLayout>
+	</ScrollView>
+</ContentPage>
