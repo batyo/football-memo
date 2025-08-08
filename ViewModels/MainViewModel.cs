@@ -38,7 +38,12 @@ namespace MatchMemoApp.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("エラー", $"試合一覧の取得に失敗しました: {ex.Message}", "OK");
+                var innerException = ex.InnerException?.Message ?? "なし";
+                var stackTrace = ex.StackTrace ?? "なし";
+                await Shell.Current.DisplayAlert("エラー",
+                    $"エラー (試合一覧の取得に失敗しました。): {ex.Message}\n" +
+                    $"内部例外: {innerException}\n" +
+                    $"スタックトレース: {stackTrace}", "OK");
             }
             finally
             {
