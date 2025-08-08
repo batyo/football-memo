@@ -28,5 +28,9 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>このアプリは試合メモの音声入力のためにマイクを使用します</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>このアプリは音声をテキストに変換するために音声認識を使用します</string>
 </dict>
 </plist>

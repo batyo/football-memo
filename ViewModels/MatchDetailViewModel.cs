@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using MatchMemoApp.Data;
 using MatchMemoApp.Models;
+using MatchMemoApp.Services;
 using System.Collections.ObjectModel;
 
 namespace MatchMemoApp.ViewModels
@@ -11,6 +12,13 @@ namespace MatchMemoApp.ViewModels
     {
         private readonly DatabaseService _databaseService;
         private System.Timers.Timer _matchTimer;
+        private readonly ISpeechService _speechService;
+
+        [ObservableProperty]
+        bool isRecording = false;
+
+        [ObservableProperty]
+        string recordingStatus = string.Empty;
 
         [ObservableProperty]
         int matchId;
@@ -50,11 +58,159 @@ namespace MatchMemoApp.ViewModels
             "フリーキック"
         };
 
-        public MatchDetailViewModel(DatabaseService databaseService)
+        public MatchDetailViewModel(DatabaseService databaseService, ISpeechService speechService)
         {
             _databaseService = databaseService;
+            _speechService = speechService;
             Title = "試合メモ";
             InitializeTimer();
+            InitializeSpeechService();
+        }
+
+        private void InitializeSpeechService()
+        {
+            _speechService.SpeechStarted += OnSpeechStarted;
+            _speechService.SpeechEnded += OnSpeechEnded;
+            _speechService.SpeechRecognizing += OnSpeechRecognizing;
+            _speechService.SpeechRecognized += OnSpeechRecognized;
+        }
+
+        private void OnSpeechStarted(object sender, EventArgs e)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                IsRecording = true;
+                RecordingStatus = "音声を聞いています...";
+            });
+        }
+
+        private void OnSpeechEnded(object sender, EventArgs e)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                IsRecording = false;
+                RecordingStatus = string.Empty;
+            });
+        }
+
+        private void OnSpeechRecognizing(object sender, string e)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                RecordingStatus = $"認識中: {e}";
+            });
+        }
+
+        private void OnSpeechRecognized(object sender, string e)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (!string.IsNullOrWhiteSpace(e))
+                {
+                    // 既存のメモテキストに追加
+                    if (!string.IsNullOrWhiteSpace(MemoText))
+                        MemoText += " ";
+                    MemoText += e;
+                }
+                RecordingStatus = "音声認識完了";
+            });
+        }
+
+        [RelayCommand]
+        async Task StartVoiceInputAsync()
+        {
+            if (SelectedPlayer == null)
+            {
+                await Shell.Current.DisplayAlert("エラー", "選手を選択してください", "OK");
+                return;
+            }
+
+            if (!_speechService.IsSupported)
+            {
+                await Shell.Current.DisplayAlert("エラー", "このデバイスでは音声入力がサポートされていません", "OK");
+                return;
+            }
+
+            try
+            {
+                IsRecording = true;
+                RecordingStatus = "音声入力準備中...";
+
+                var result = await _speechService.RecognizeSpeechAsync();
+
+                if (!string.IsNullOrWhiteSpace(result))
+                {
+                    // 既存のメモテキストに追加
+                    if (!string.IsNullOrWhiteSpace(MemoText))
+                        MemoText += " ";
+                    MemoText += result;
+
+                    await Shell.Current.DisplayAlert("成功", "音声入力が完了しました", "OK");
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("情報", "音声が認識されませんでした", "OK");
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                await Shell.Current.DisplayAlert("エラー", "マイクのアクセス許可が必要です。設定から許可してください。", "OK");
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("エラー", $"音声入力に失敗しました: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsRecording = false;
+                RecordingStatus = string.Empty;
+            }
+        }
+
+        [RelayCommand]
+        async Task QuickVoiceMemoAsync()
+        {
+            if (SelectedPlayer == null)
+            {
+                await Shell.Current.DisplayAlert("エラー", "選手を選択してください", "OK");
+                return;
+            }
+
+            try
+            {
+                var result = await _speechService.RecognizeSpeechAsync();
+
+                if (!string.IsNullOrWhiteSpace(result))
+                {
+                    // 音声認識結果を直接メモとして保存
+                    var memo = new Memo
+                    {
+                        MatchId = MatchId,
+                        PlayerId = SelectedPlayer.Id,
+                        Content = $"[音声入力] {result}",
+                        MatchMinute = IsRealTimeMode ? CurrentMatch.CurrentMinute : 0
+                    };
+
+                    await _databaseService.SaveMemoAsync(memo);
+
+                    // UI更新
+                    CurrentPlayerMemos.Add(memo);
+
+                    // 選手のメモ数を更新
+                    var playerWithMemos = PlayersWithMemos.FirstOrDefault(p => p.Player.Id == SelectedPlayer.Id);
+                    if (playerWithMemos != null)
+                    {
+                        playerWithMemos.Memos.Add(memo);
+                        playerWithMemos.MemoCount = playerWithMemos.Memos.Count;
+                    }
+
+                    await Shell.Current.DisplayAlert("成功", "音声メモを保存しました", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("エラー", $"音声メモの保存に失敗しました: {ex.Message}", "OK");
+            }
         }
 
         private void InitializeTimer()

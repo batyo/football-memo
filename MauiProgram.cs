@@ -1,6 +1,7 @@
 ﻿using MatchMemoApp.Data;
 using MatchMemoApp.ViewModels;
 using MatchMemoApp.Views;
+using MatchMemoApp.Services;
 using Microsoft.Extensions.Logging;
 
 namespace MatchMemoApp;
@@ -26,6 +27,7 @@ public static class MauiProgram
 
         // サービス登録
         builder.Services.AddSingleton<DatabaseService>();
+        builder.Services.AddSingleton<ISpeechService, SpeechService>();
 
         // ViewModel登録
         builder.Services.AddSingleton<MainViewModel>();

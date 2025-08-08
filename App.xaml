@@ -16,6 +16,7 @@
             <converters:BoolToSaveButtonTextConverter x:Key="BoolToSaveButtonTextConverter" />
             <converters:IsNullOrEmptyConverter x:Key="IsNullOrEmptyConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
