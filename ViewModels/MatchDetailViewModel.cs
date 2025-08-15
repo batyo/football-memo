@@ -2,8 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using MatchMemoApp.Data;
 using MatchMemoApp.Models;
-using MatchMemoApp.Services;
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 
 namespace MatchMemoApp.ViewModels
 {
@@ -12,19 +12,12 @@ namespace MatchMemoApp.ViewModels
     {
         private readonly DatabaseService _databaseService;
         private System.Timers.Timer _matchTimer;
-        private readonly ISpeechService _speechService;
-
-        [ObservableProperty]
-        bool isRecording = false;
-
-        [ObservableProperty]
-        string recordingStatus = string.Empty;
 
         [ObservableProperty]
         int matchId;
 
         [ObservableProperty]
-        Match currentMatch;
+        MatchMemoApp.Models.Match currentMatch;
 
         [ObservableProperty]
         string matchTimeDisplay = "00:00";
@@ -41,8 +34,12 @@ namespace MatchMemoApp.ViewModels
         [ObservableProperty]
         bool isRealTimeMode = true;
 
+        [ObservableProperty]
+        bool isHomeTeamSelected = true;
+
         // 選手とメモのコレクション
-        public ObservableCollection<PlayerWithMemos> PlayersWithMemos { get; } = new();
+        public ObservableCollection<PlayerWithMemos> HomeTeamPlayers { get; } = new();
+        public ObservableCollection<PlayerWithMemos> AwayTeamPlayers { get; } = new();
         public ObservableCollection<Memo> CurrentPlayerMemos { get; } = new();
         public ObservableCollection<string> MemoTemplates { get; } = new()
         {
@@ -55,162 +52,19 @@ namespace MatchMemoApp.ViewModels
             "交代",
             "オフサイド",
             "コーナーキック",
-            "フリーキック"
+            "フリーキック",
+            "ドリブル突破",
+            "クロス",
+            "ヘディング",
+            "タックル",
+            "インターセプト"
         };
 
-        public MatchDetailViewModel(DatabaseService databaseService, ISpeechService speechService)
+        public MatchDetailViewModel(DatabaseService databaseService)
         {
             _databaseService = databaseService;
-            _speechService = speechService;
             Title = "試合メモ";
             InitializeTimer();
-            InitializeSpeechService();
-        }
-
-        private void InitializeSpeechService()
-        {
-            _speechService.SpeechStarted += OnSpeechStarted;
-            _speechService.SpeechEnded += OnSpeechEnded;
-            _speechService.SpeechRecognizing += OnSpeechRecognizing;
-            _speechService.SpeechRecognized += OnSpeechRecognized;
-        }
-
-        private void OnSpeechStarted(object sender, EventArgs e)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                IsRecording = true;
-                RecordingStatus = "音声を聞いています...";
-            });
-        }
-
-        private void OnSpeechEnded(object sender, EventArgs e)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                IsRecording = false;
-                RecordingStatus = string.Empty;
-            });
-        }
-
-        private void OnSpeechRecognizing(object sender, string e)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                RecordingStatus = $"認識中: {e}";
-            });
-        }
-
-        private void OnSpeechRecognized(object sender, string e)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                if (!string.IsNullOrWhiteSpace(e))
-                {
-                    // 既存のメモテキストに追加
-                    if (!string.IsNullOrWhiteSpace(MemoText))
-                        MemoText += " ";
-                    MemoText += e;
-                }
-                RecordingStatus = "音声認識完了";
-            });
-        }
-
-        [RelayCommand]
-        async Task StartVoiceInputAsync()
-        {
-            if (SelectedPlayer == null)
-            {
-                await Shell.Current.DisplayAlert("エラー", "選手を選択してください", "OK");
-                return;
-            }
-
-            if (!_speechService.IsSupported)
-            {
-                await Shell.Current.DisplayAlert("エラー", "このデバイスでは音声入力がサポートされていません", "OK");
-                return;
-            }
-
-            try
-            {
-                IsRecording = true;
-                RecordingStatus = "音声入力準備中...";
-
-                var result = await _speechService.RecognizeSpeechAsync();
-
-                if (!string.IsNullOrWhiteSpace(result))
-                {
-                    // 既存のメモテキストに追加
-                    if (!string.IsNullOrWhiteSpace(MemoText))
-                        MemoText += " ";
-                    MemoText += result;
-
-                    await Shell.Current.DisplayAlert("成功", "音声入力が完了しました", "OK");
-                }
-                else
-                {
-                    await Shell.Current.DisplayAlert("情報", "音声が認識されませんでした", "OK");
-                }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                await Shell.Current.DisplayAlert("エラー", "マイクのアクセス許可が必要です。設定から許可してください。", "OK");
-            }
-            catch (Exception ex)
-            {
-                await Shell.Current.DisplayAlert("エラー", $"音声入力に失敗しました: {ex.Message}", "OK");
-            }
-            finally
-            {
-                IsRecording = false;
-                RecordingStatus = string.Empty;
-            }
-        }
-
-        [RelayCommand]
-        async Task QuickVoiceMemoAsync()
-        {
-            if (SelectedPlayer == null)
-            {
-                await Shell.Current.DisplayAlert("エラー", "選手を選択してください", "OK");
-                return;
-            }
-
-            try
-            {
-                var result = await _speechService.RecognizeSpeechAsync();
-
-                if (!string.IsNullOrWhiteSpace(result))
-                {
-                    // 音声認識結果を直接メモとして保存
-                    var memo = new Memo
-                    {
-                        MatchId = MatchId,
-                        PlayerId = SelectedPlayer.Id,
-                        Content = $"[音声入力] {result}",
-                        MatchMinute = IsRealTimeMode ? CurrentMatch.CurrentMinute : 0
-                    };
-
-                    await _databaseService.SaveMemoAsync(memo);
-
-                    // UI更新
-                    CurrentPlayerMemos.Add(memo);
-
-                    // 選手のメモ数を更新
-                    var playerWithMemos = PlayersWithMemos.FirstOrDefault(p => p.Player.Id == SelectedPlayer.Id);
-                    if (playerWithMemos != null)
-                    {
-                        playerWithMemos.Memos.Add(memo);
-                        playerWithMemos.MemoCount = playerWithMemos.Memos.Count;
-                    }
-
-                    await Shell.Current.DisplayAlert("成功", "音声メモを保存しました", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                await Shell.Current.DisplayAlert("エラー", $"音声メモの保存に失敗しました: {ex.Message}", "OK");
-            }
         }
 
         private void InitializeTimer()
@@ -247,31 +101,20 @@ namespace MatchMemoApp.ViewModels
                 IsRealTimeMode = CurrentMatch.IsRealTimeMode;
                 UpdateMatchTimeDisplay();
 
-                // 試合に参加している選手を読み込み
-                var matchPlayers = await _databaseService.GetMatchPlayersAsync(MatchId);
-                var allPlayers = await _databaseService.GetPlayersAsync();
+                // 両チームの選手を読み込み
+                await LoadTeamPlayersAsync();
 
-                PlayersWithMemos.Clear();
-                foreach (var matchPlayer in matchPlayers)
+                // 最初の選手を選択（ホームチームから）
+                if (HomeTeamPlayers.Any())
                 {
-                    var player = allPlayers.FirstOrDefault(p => p.Id == matchPlayer.PlayerId);
-                    if (player != null)
-                    {
-                        var memos = await _databaseService.GetMemosForPlayerAsync(MatchId, player.Id);
-                        var playerWithMemos = new PlayerWithMemos
-                        {
-                            Player = player,
-                            Memos = new ObservableCollection<Memo>(memos),
-                            MemoCount = memos.Count
-                        };
-                        PlayersWithMemos.Add(playerWithMemos);
-                    }
+                    SelectedPlayer = HomeTeamPlayers.First().Player;
+                    IsHomeTeamSelected = true;
+                    await LoadPlayerMemosAsync();
                 }
-
-                // 最初の選手を選択
-                if (PlayersWithMemos.Any())
+                else if (AwayTeamPlayers.Any())
                 {
-                    SelectedPlayer = PlayersWithMemos.First().Player;
+                    SelectedPlayer = AwayTeamPlayers.First().Player;
+                    IsHomeTeamSelected = false;
                     await LoadPlayerMemosAsync();
                 }
             }
@@ -285,12 +128,83 @@ namespace MatchMemoApp.ViewModels
             }
         }
 
+        private async Task LoadTeamPlayersAsync()
+        {
+            var homeMatchPlayers = await _databaseService.GetHomeTeamPlayersAsync(MatchId);
+            var awayMatchPlayers = await _databaseService.GetAwayTeamPlayersAsync(MatchId);
+            var allPlayers = await _databaseService.GetPlayersAsync();
+
+            // ホームチーム選手を読み込み
+            HomeTeamPlayers.Clear();
+            foreach (var matchPlayer in homeMatchPlayers)
+            {
+                var player = allPlayers.FirstOrDefault(p => p.Id == matchPlayer.PlayerId);
+                if (player != null)
+                {
+                    var memos = await _databaseService.GetMemosForPlayerAsync(MatchId, player.Id);
+                    var playerWithMemos = new PlayerWithMemos
+                    {
+                        Player = player,
+                        Memos = new ObservableCollection<Memo>(memos),
+                        MemoCount = memos.Count
+                    };
+                    HomeTeamPlayers.Add(playerWithMemos);
+                }
+            }
+
+            // アウェイチーム選手を読み込み
+            AwayTeamPlayers.Clear();
+            foreach (var matchPlayer in awayMatchPlayers)
+            {
+                var player = allPlayers.FirstOrDefault(p => p.Id == matchPlayer.PlayerId);
+                if (player != null)
+                {
+                    var memos = await _databaseService.GetMemosForPlayerAsync(MatchId, player.Id);
+                    var playerWithMemos = new PlayerWithMemos
+                    {
+                        Player = player,
+                        Memos = new ObservableCollection<Memo>(memos),
+                        MemoCount = memos.Count
+                    };
+                    AwayTeamPlayers.Add(playerWithMemos);
+                }
+            }
+        }
+
+        [RelayCommand]
+        void SwitchTeam(object parameter)
+        {
+            bool isHome = true;
+            if (parameter != null)
+            {
+                if (parameter is bool b)
+                {
+                    isHome = b;
+                }
+                else
+                {
+                    bool.TryParse(parameter.ToString(), out isHome);
+                }
+            }
+
+            IsHomeTeamSelected = isHome;
+
+            // チーム切り替え時に選手選択をクリア
+            SelectedPlayer = null;
+            CurrentPlayerMemos.Clear();
+        }
+
         [RelayCommand]
         async Task SelectPlayerAsync(Player player)
         {
             if (player == null) return;
 
             SelectedPlayer = player;
+
+            // 選択した選手がどちらのチームかを判定
+            var isPlayerInHomeTeam = HomeTeamPlayers.Any(p => p.Player.Id == player.Id);
+            IsHomeTeamSelected = isPlayerInHomeTeam;
+
             await LoadPlayerMemosAsync();
         }
 
@@ -323,7 +237,9 @@ namespace MatchMemoApp.ViewModels
                     MatchId = MatchId,
                     PlayerId = SelectedPlayer.Id,
                     Content = MemoText,
-                    MatchMinute = IsRealTimeMode ? CurrentMatch.CurrentMinute : 0
+                    MatchMinute = IsRealTimeMode ? CurrentMatch.CurrentMinute : 0,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 await _databaseService.SaveMemoAsync(memo);
@@ -332,7 +248,8 @@ namespace MatchMemoApp.ViewModels
                 CurrentPlayerMemos.Add(memo);
 
                 // 選手のメモ数を更新
-                var playerWithMemos = PlayersWithMemos.FirstOrDefault(p => p.Player.Id == SelectedPlayer.Id);
+                var allPlayers = HomeTeamPlayers.Concat(AwayTeamPlayers);
+                var playerWithMemos = allPlayers.FirstOrDefault(p => p.Player.Id == SelectedPlayer.Id);
                 if (playerWithMemos != null)
                 {
                     playerWithMemos.Memos.Add(memo);

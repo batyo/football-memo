@@ -17,6 +17,14 @@
             <converters:IsNullOrEmptyConverter x:Key="IsNullOrEmptyConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <converters:BoolToHomeTeamColorConverter x:Key="BoolToHomeTeamColorConverter" />
+            <converters:BoolToAwayTeamColorConverter x:Key="BoolToAwayTeamColorConverter" />
+            <converters:BoolToTeamNameConverter x:Key="BoolToTeamNameConverter" />
+            <converters:BoolToTeamColorConverter x:Key="BoolToTeamColorConverter" />
+            <converters:PercentageToPixelXConverter x:Key="PercentageToPixelXConverter" />
+            <converters:PercentageToPixelYConverter x:Key="PercentageToPixelYConverter" />
+            <converters:BoolToPlayPauseTextConverter x:Key="BoolToPlayPauseTextConverter" />
+            <converters:PercentageToAbsoluteBoundsConverter x:Key="PercentageToAbsoluteBoundsConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

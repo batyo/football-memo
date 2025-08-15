@@ -13,5 +13,8 @@ namespace MatchMemoApp.Models
         public double FieldX { get; set; } // フィールド上のX座標
         public double FieldY { get; set; } // フィールド上のY座標
         public bool IsStarting { get; set; }
+
+        // 新しいフィールド
+        public bool IsHomeTeam { get; set; } = true; // ホームチーム=true, アウェイチーム=false
     }
 }

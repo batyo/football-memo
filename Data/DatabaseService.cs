@@ -22,28 +22,27 @@ namespace MatchMemoApp.Data
             await _database.CreateTableAsync<Player>();
             await _database.CreateTableAsync<MatchPlayer>();
             await _database.CreateTableAsync<Memo>();
-            await SeedDataAsync();
+
+            // データベース更新（既存テーブルに新しいカラムを追加）
+            await UpdateDatabaseSchema();
         }
 
-        private async Task SeedDataAsync()
+        private async Task UpdateDatabaseSchema()
         {
-            var existingMatches = await _database.Table<Match>().CountAsync();
-            if (existingMatches == 0)
+            try
             {
-                // サンプルデータ作成
-                var sampleMatch = new Match
-                {
-                    Date = DateTime.Now.AddDays(-1),
-                    Weather = "晴れ",
-                    Opponent = "○○FC",
-                    Stadium = "××スタジアム",
-                    Formation = "4-4-2",
-                    IsRealTimeMode = false,
-                    CurrentMinute = 0,
-                    IsTimerPaused = true
-                };
+                // Matchテーブルに新しいカラムを追加
+                await _database.ExecuteAsync("ALTER TABLE Matches ADD COLUMN HomeTeamName TEXT DEFAULT 'ホームチーム'");
+                await _database.ExecuteAsync("ALTER TABLE Matches ADD COLUMN AwayTeamName TEXT DEFAULT 'アウェイチーム'");
+                await _database.ExecuteAsync("ALTER TABLE Matches ADD COLUMN HomeTeamFormation TEXT DEFAULT '4-4-2'");
+                await _database.ExecuteAsync("ALTER TABLE Matches ADD COLUMN AwayTeamFormation TEXT DEFAULT '4-4-2'");
 
-                await _database.InsertAsync(sampleMatch);
+                // MatchPlayerテーブルに新しいカラムを追加
+                await _database.ExecuteAsync("ALTER TABLE MatchPlayers ADD COLUMN IsHomeTeam INTEGER DEFAULT 1");
+            }
+            catch
+            {
+                // カラムが既に存在する場合はエラーを無視
             }
         }
 
@@ -142,6 +141,22 @@ namespace MatchMemoApp.Data
             await Init();
             return await _database.Table<MatchPlayer>()
                 .Where(mp => mp.MatchId == matchId)
+                .ToListAsync();
+        }
+
+        public async Task<List<MatchPlayer>> GetHomeTeamPlayersAsync(int matchId)
+        {
+            await Init();
+            return await _database.Table<MatchPlayer>()
+                .Where(mp => mp.MatchId == matchId && mp.IsHomeTeam == true)
+                .ToListAsync();
+        }
+
+        public async Task<List<MatchPlayer>> GetAwayTeamPlayersAsync(int matchId)
+        {
+            await Init();
+            return await _database.Table<MatchPlayer>()
+                .Where(mp => mp.MatchId == matchId && mp.IsHomeTeam == false)
                 .ToListAsync();
         }
 
