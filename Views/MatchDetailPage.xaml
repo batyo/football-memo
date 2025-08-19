@@ -7,196 +7,194 @@
              x:DataType="viewmodel:MatchDetailViewModel"
              Title="{Binding Title}">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <ScrollView>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- 試合情報ヘッダー -->
-        <Frame Grid.Row="0" BackgroundColor="#007ACC" HasShadow="True" CornerRadius="0" Padding="15">
-            <StackLayout>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <Label Grid.Column="0" 
-                           Text="{Binding CurrentMatch.HomeTeamName}" 
-                           TextColor="White" FontSize="16" FontAttributes="Bold" 
-                           HorizontalOptions="Center" />
-
-                    <Label Grid.Column="1" 
-                           Text="vs" 
-                           TextColor="White" FontSize="18" FontAttributes="Bold" 
-                           HorizontalOptions="Center" />
-
-                    <Label Grid.Column="2" 
-                           Text="{Binding CurrentMatch.AwayTeamName}" 
-                           TextColor="White" FontSize="16" FontAttributes="Bold" 
-                           HorizontalOptions="Center" />
-                </Grid>
-
-                <Label Text="{Binding CurrentMatch.Date, StringFormat='{0:yyyy/MM/dd}'}" 
-                       TextColor="White" FontSize="14" 
-                       HorizontalOptions="Center" />
-
-                <Label Text="{Binding CurrentMatch.Stadium}" 
-                       TextColor="White" FontSize="12" 
-                       HorizontalOptions="Center" 
-                       IsVisible="{Binding CurrentMatch.Stadium, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
-            </StackLayout>
-        </Frame>
-
-        <!-- タイマー表示 -->
-        <Frame Grid.Row="1" BackgroundColor="White" HasShadow="True" CornerRadius="0" Padding="15">
-            <StackLayout>
-                <Label Text="{Binding MatchTimeDisplay}" 
-                       FontSize="36" FontAttributes="Bold" 
-                       HorizontalOptions="Center" 
-                       TextColor="#007ACC" />
-
-                <!-- タイマー操作ボタン -->
-                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10" 
-                             IsVisible="{Binding IsRealTimeMode}">
-                    <Button Text="{Binding IsTimerRunning, Converter={StaticResource BoolToPlayPauseTextConverter}}" 
-                            Command="{Binding StartStopTimerCommand}" 
-                            BackgroundColor="{Binding IsTimerRunning, Converter={StaticResource BoolToColorConverter}}"
-                            TextColor="White"
-                            WidthRequest="60" />
-                    <Button Text="⏹️" Command="{Binding ResetTimerCommand}" 
-                            BackgroundColor="Gray" TextColor="White" WidthRequest="50" />
-                    <Button Text="+1" Command="{Binding AddMinuteCommand}" 
-                            BackgroundColor="#4CAF50" TextColor="White" WidthRequest="50" />
-                    <Button Text="-1" Command="{Binding SubtractMinuteCommand}" 
-                            BackgroundColor="#F44336" TextColor="White" WidthRequest="50" />
-                </StackLayout>
-            </StackLayout>
-        </Frame>
-
-        <!-- メイン画面 -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="2*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- 選手一覧 -->
-            <Frame Grid.Column="0" BackgroundColor="White" HasShadow="True" CornerRadius="0" Padding="10">
+            <!-- 試合情報ヘッダー -->
+            <Frame Grid.Row="0" BackgroundColor="#007ACC" HasShadow="True" CornerRadius="0" Padding="15">
                 <StackLayout>
-                    <!-- チーム切り替えボタン -->
-                    <Grid Margin="0,0,0,10">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0" 
-                                Text="{Binding CurrentMatch.HomeTeamName}"
-                                Command="{Binding SwitchTeamCommand}" 
-                                CommandParameter="True"
-                                BackgroundColor="{Binding IsHomeTeamSelected, Converter={StaticResource BoolToHomeTeamColorConverter}}"
-                                TextColor="White" 
-                                FontSize="12" />
+                        <Label Grid.Column="0" 
+                               Text="{Binding CurrentMatch.HomeTeamName}" 
+                               TextColor="White" FontSize="16" FontAttributes="Bold" 
+                               HorizontalOptions="Center" />
 
-                        <Button Grid.Column="1" 
-                                Text="{Binding CurrentMatch.AwayTeamName}"
-                                Command="{Binding SwitchTeamCommand}" 
-                                CommandParameter="False"
-                                BackgroundColor="{Binding IsHomeTeamSelected, Converter={StaticResource BoolToAwayTeamColorConverter}}"
-                                TextColor="White" 
-                                FontSize="12" />
+                        <Label Grid.Column="1" 
+                               Text="vs" 
+                               TextColor="White" FontSize="18" FontAttributes="Bold" 
+                               HorizontalOptions="Center" />
+
+                        <Label Grid.Column="2" 
+                               Text="{Binding CurrentMatch.AwayTeamName}" 
+                               TextColor="White" FontSize="16" FontAttributes="Bold" 
+                               HorizontalOptions="Center" />
                     </Grid>
 
-                    <!-- ホームチーム選手一覧 -->
-                    <CollectionView ItemsSource="{Binding HomeTeamPlayers}" 
-                                  IsVisible="{Binding IsHomeTeamSelected}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodel:PlayerWithMemos">
-                                <Grid Padding="5">
-                                    <Frame BackgroundColor="#E3F2FD" HasShadow="False" CornerRadius="5" Padding="10">
-                                        <Frame.GestureRecognizers>
-                                            <TapGestureRecognizer 
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MatchDetailViewModel}}, Path=SelectPlayerCommand}"
-                                                CommandParameter="{Binding Player}"/>
-                                        </Frame.GestureRecognizers>
+                    <Label Text="{Binding CurrentMatch.Date, StringFormat='{0:yyyy/MM/dd}'}" 
+                           TextColor="White" FontSize="14" 
+                           HorizontalOptions="Center" />
 
-                                        <StackLayout>
-                                            <StackLayout Orientation="Horizontal">
-                                                <Frame BackgroundColor="#2196F3" 
-                                                       WidthRequest="25" HeightRequest="25" 
-                                                       CornerRadius="12.5" HasShadow="False" 
-                                                       Padding="0" VerticalOptions="Center">
-                                                    <Label Text="{Binding Player.Number}" 
-                                                           TextColor="White" FontSize="10" FontAttributes="Bold"
-                                                           HorizontalOptions="Center" VerticalOptions="Center" />
-                                                </Frame>
-                                                <Label Text="{Binding Player.Name}" 
-                                                       FontSize="14" VerticalOptions="Center" 
-                                                       HorizontalOptions="StartAndExpand" />
-                                            </StackLayout>
-                                            <StackLayout Orientation="Horizontal">
-                                                <Label Text="{Binding Player.Position}" 
-                                                       FontSize="12" TextColor="Gray" />
-                                                <Label Text="{Binding MemoCount, StringFormat='メモ: {0}件'}" 
-                                                       FontSize="12" TextColor="Blue" 
-                                                       HorizontalOptions="EndAndExpand" />
-                                            </StackLayout>
-                                        </StackLayout>
-                                    </Frame>
-                                </Grid>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
-                    <!-- アウェイチーム選手一覧 -->
-                    <CollectionView ItemsSource="{Binding AwayTeamPlayers}" 
-                                  IsVisible="{Binding IsHomeTeamSelected, Converter={StaticResource InverseBoolConverter}}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodel:PlayerWithMemos">
-                                <Grid Padding="5">
-                                    <Frame BackgroundColor="#FFEBEE" HasShadow="False" CornerRadius="5" Padding="10">
-                                        <Frame.GestureRecognizers>
-                                            <TapGestureRecognizer 
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MatchDetailViewModel}}, Path=SelectPlayerCommand}"
-                                                CommandParameter="{Binding Player}"/>
-                                        </Frame.GestureRecognizers>
-
-                                        <StackLayout>
-                                            <StackLayout Orientation="Horizontal">
-                                                <Frame BackgroundColor="#F44336" 
-                                                       WidthRequest="25" HeightRequest="25" 
-                                                       CornerRadius="12.5" HasShadow="False" 
-                                                       Padding="0" VerticalOptions="Center">
-                                                    <Label Text="{Binding Player.Number}" 
-                                                           TextColor="White" FontSize="10" FontAttributes="Bold"
-                                                           HorizontalOptions="Center" VerticalOptions="Center" />
-                                                </Frame>
-                                                <Label Text="{Binding Player.Name}" 
-                                                       FontSize="14" VerticalOptions="Center" 
-                                                       HorizontalOptions="StartAndExpand" />
-                                            </StackLayout>
-                                            <StackLayout Orientation="Horizontal">
-                                                <Label Text="{Binding Player.Position}" 
-                                                       FontSize="12" TextColor="Gray" />
-                                                <Label Text="{Binding MemoCount, StringFormat='メモ: {0}件'}" 
-                                                       FontSize="12" TextColor="Red" 
-                                                       HorizontalOptions="EndAndExpand" />
-                                            </StackLayout>
-                                        </StackLayout>
-                                    </Frame>
-                                </Grid>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                    <Label Text="{Binding CurrentMatch.Stadium}" 
+                           TextColor="White" FontSize="12" 
+                           HorizontalOptions="Center" 
+                           IsVisible="{Binding CurrentMatch.Stadium, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
                 </StackLayout>
             </Frame>
 
-            <!-- メモ入力・表示エリア -->
-            <StackLayout Grid.Column="1" Padding="10" Spacing="10">
+            <!-- タイマー表示 -->
+            <Frame Grid.Row="1" BackgroundColor="White" HasShadow="True" CornerRadius="0" Padding="15">
+                <StackLayout>
+                    <Label Text="{Binding MatchTimeDisplay}" 
+                           FontSize="36" FontAttributes="Bold" 
+                           HorizontalOptions="Center" 
+                           TextColor="#007ACC" />
+
+                    <!-- タイマー操作ボタン -->
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10" 
+                                 IsVisible="{Binding IsRealTimeMode}">
+                        <Button Text="{Binding IsTimerRunning, Converter={StaticResource BoolToPlayPauseTextConverter}}" 
+                                Command="{Binding StartStopTimerCommand}" 
+                                BackgroundColor="{Binding IsTimerRunning, Converter={StaticResource BoolToColorConverter}}"
+                                TextColor="White"
+                                WidthRequest="60" />
+                        <Button Text="⏹️" Command="{Binding ResetTimerCommand}" 
+                                BackgroundColor="Gray" TextColor="White" WidthRequest="50" />
+                        <Button Text="+1" Command="{Binding AddMinuteCommand}" 
+                                BackgroundColor="#4CAF50" TextColor="White" WidthRequest="50" />
+                        <Button Text="-1" Command="{Binding SubtractMinuteCommand}" 
+                                BackgroundColor="#F44336" TextColor="White" WidthRequest="50" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- メイン画面 -->
+            <StackLayout Grid.Row="2" Orientation="Vertical" Spacing="10" Padding="10">
+
+                <!-- 選手一覧セクション -->
+                <Frame BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="15">
+                    <StackLayout>
+                        <Label Text="選手一覧" FontSize="16" FontAttributes="Bold" Margin="0,0,0,10" />
+
+                        <!-- チーム切り替えボタン -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" 
+                                    Text="{Binding CurrentMatch.HomeTeamName}"
+                                    Command="{Binding SwitchTeamCommand}" 
+                                    CommandParameter="True"
+                                    BackgroundColor="{Binding IsHomeTeamSelected, Converter={StaticResource BoolToHomeTeamColorConverter}}"
+                                    TextColor="White" 
+                                    FontSize="12" />
+
+                            <Button Grid.Column="1" 
+                                    Text="{Binding CurrentMatch.AwayTeamName}"
+                                    Command="{Binding SwitchTeamCommand}" 
+                                    CommandParameter="False"
+                                    BackgroundColor="{Binding IsHomeTeamSelected, Converter={StaticResource BoolToAwayTeamColorConverter}}"
+                                    TextColor="White" 
+                                    FontSize="12" />
+                        </Grid>
+
+                        <!-- ホームチーム選手一覧 -->
+                        <CollectionView ItemsSource="{Binding HomeTeamPlayers}" 
+                                      IsVisible="{Binding IsHomeTeamSelected}"
+                                      HeightRequest="300">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:PlayerWithMemos">
+                                    <Grid Padding="5">
+                                        <Frame BackgroundColor="#E3F2FD" HasShadow="False" CornerRadius="5" Padding="10">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MatchDetailViewModel}}, Path=SelectPlayerCommand}"
+                                                    CommandParameter="{Binding Player}"/>
+                                            </Frame.GestureRecognizers>
+
+                                            <StackLayout>
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Frame BackgroundColor="#2196F3" 
+                                                           WidthRequest="25" HeightRequest="25" 
+                                                           CornerRadius="12.5" HasShadow="False" 
+                                                           Padding="0" VerticalOptions="Center">
+                                                        <Label Text="{Binding Player.Number}" 
+                                                               TextColor="White" FontSize="10" FontAttributes="Bold"
+                                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                                    </Frame>
+                                                    <Label Text="{Binding Player.Name}" 
+                                                           FontSize="14" VerticalOptions="Center" 
+                                                           HorizontalOptions="StartAndExpand" />
+                                                </StackLayout>
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="{Binding Player.Position}" 
+                                                           FontSize="12" TextColor="Gray" />
+                                                    <Label Text="{Binding MemoCount, StringFormat='メモ: {0}件'}" 
+                                                           FontSize="12" TextColor="Blue" 
+                                                           HorizontalOptions="EndAndExpand" />
+                                                </StackLayout>
+                                            </StackLayout>
+                                        </Frame>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <!-- アウェイチーム選手一覧 -->
+                        <CollectionView ItemsSource="{Binding AwayTeamPlayers}" 
+                                      IsVisible="{Binding IsHomeTeamSelected, Converter={StaticResource InverseBoolConverter}}"
+                                      HeightRequest="300">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:PlayerWithMemos">
+                                    <Grid Padding="5">
+                                        <Frame BackgroundColor="#FFEBEE" HasShadow="False" CornerRadius="5" Padding="10">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MatchDetailViewModel}}, Path=SelectPlayerCommand}"
+                                                    CommandParameter="{Binding Player}"/>
+                                            </Frame.GestureRecognizers>
+
+                                            <StackLayout>
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Frame BackgroundColor="#F44336" 
+                                                           WidthRequest="25" HeightRequest="25" 
+                                                           CornerRadius="12.5" HasShadow="False" 
+                                                           Padding="0" VerticalOptions="Center">
+                                                        <Label Text="{Binding Player.Number}" 
+                                                               TextColor="White" FontSize="10" FontAttributes="Bold"
+                                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                                    </Frame>
+                                                    <Label Text="{Binding Player.Name}" 
+                                                           FontSize="14" VerticalOptions="Center" 
+                                                           HorizontalOptions="StartAndExpand" />
+                                                </StackLayout>
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="{Binding Player.Position}" 
+                                                           FontSize="12" TextColor="Gray" />
+                                                    <Label Text="{Binding MemoCount, StringFormat='メモ: {0}件'}" 
+                                                           FontSize="12" TextColor="Red" 
+                                                           HorizontalOptions="EndAndExpand" />
+                                                </StackLayout>
+                                            </StackLayout>
+                                        </Frame>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
 
                 <!-- 選手情報表示 -->
                 <Frame BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="15"
@@ -264,42 +262,41 @@
                 <Frame BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="15">
                     <StackLayout>
                         <Label Text="過去のメモ" FontSize="14" FontAttributes="Bold" />
-                        <ScrollView MaximumHeightRequest="250">
-                            <CollectionView ItemsSource="{Binding CurrentPlayerMemos}">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="model:Memo">
-                                        <Grid Padding="5">
-                                            <Frame BackgroundColor="#FAFAFA" HasShadow="False" CornerRadius="5" Padding="10">
-                                                <StackLayout>
-                                                    <StackLayout Orientation="Horizontal">
-                                                        <Label Text="{Binding MatchMinute, StringFormat='{0}分'}" 
-                                                               FontSize="12" FontAttributes="Bold" 
-                                                               TextColor="#666" />
-                                                        <Label Text="{Binding CreatedAt, StringFormat='{0:HH:mm}'}" 
-                                                               FontSize="12" TextColor="#999" 
-                                                               HorizontalOptions="EndAndExpand" />
-                                                    </StackLayout>
-                                                    <Label Text="{Binding Content}" 
-                                                           FontSize="14" />
+                        <CollectionView ItemsSource="{Binding CurrentPlayerMemos}"
+                                      HeightRequest="300">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="model:Memo">
+                                    <Grid Padding="5">
+                                        <Frame BackgroundColor="#FAFAFA" HasShadow="False" CornerRadius="5" Padding="10">
+                                            <StackLayout>
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="{Binding MatchMinute, StringFormat='{0}分'}" 
+                                                           FontSize="12" FontAttributes="Bold" 
+                                                           TextColor="#666" />
+                                                    <Label Text="{Binding CreatedAt, StringFormat='{0:HH:mm}'}" 
+                                                           FontSize="12" TextColor="#999" 
+                                                           HorizontalOptions="EndAndExpand" />
                                                 </StackLayout>
-                                            </Frame>
-                                        </Grid>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
+                                                <Label Text="{Binding Content}" 
+                                                       FontSize="14" />
+                                            </StackLayout>
+                                        </Frame>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
 
-                                <CollectionView.EmptyView>
-                                    <StackLayout Padding="20">
-                                        <Label Text="まだメモがありません" 
-                                               FontSize="14" TextColor="Gray" 
-                                               HorizontalOptions="Center" 
-                                               VerticalOptions="Center" />
-                                    </StackLayout>
-                                </CollectionView.EmptyView>
-                            </CollectionView>
-                        </ScrollView>
+                            <CollectionView.EmptyView>
+                                <StackLayout Padding="20">
+                                    <Label Text="まだメモがありません" 
+                                           FontSize="14" TextColor="Gray" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </StackLayout>
+                            </CollectionView.EmptyView>
+                        </CollectionView>
                     </StackLayout>
                 </Frame>
             </StackLayout>
         </Grid>
-    </Grid>
+    </ScrollView>
 </ContentPage>
