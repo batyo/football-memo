@@ -8,192 +8,350 @@
              Title="{Binding Title}">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <!-- メイン画面 - 選手一覧 -->
+        <Grid x:Name="MainContentGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- 選手一覧 -->
-        <Frame Grid.Column="0" BackgroundColor="White" HasShadow="True" CornerRadius="0" Padding="15">
-            <StackLayout>
-                <StackLayout Orientation="Horizontal" Spacing="10" Margin="0,0,0,15">
-                    <Label Text="選手一覧" FontSize="18" FontAttributes="Bold" 
-                           HorizontalOptions="Start" VerticalOptions="Center" />
-                    <Button Text="新規追加" 
+            <!-- ヘッダー部分 -->
+            <Frame Grid.Row="0" BackgroundColor="White" HasShadow="True" CornerRadius="10" Padding="20" Margin="15,15,15,0">
+                <StackLayout>
+                    <Label Text="選手管理" FontSize="24" FontAttributes="Bold" 
+                           HorizontalOptions="Center" TextColor="#333" />
+
+                    <Button Text="新規選手登録" 
                             Command="{Binding NewPlayerCommand}"
                             BackgroundColor="#4CAF50" 
                             TextColor="White" 
-                            CornerRadius="5" />
-                </StackLayout>
-
-                <RefreshView Command="{Binding LoadPlayersCommand}" IsRefreshing="{Binding IsBusy}">
-                    <CollectionView ItemsSource="{Binding Players}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="model:Player">
-                                <Grid Padding="5" Margin="0,2">
-                                    <Frame BackgroundColor="#F8F9FA" HasShadow="False" CornerRadius="8" Padding="15">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
-
-                                            <!-- 選手画像 -->
-                                            <Frame Grid.Column="0" Grid.RowSpan="2" 
-                                                   BackgroundColor="#2196F3" 
-                                                   WidthRequest="50" HeightRequest="50" 
-                                                   CornerRadius="25" HasShadow="False" 
-                                                   Padding="0" VerticalOptions="Center">
-                                                <Label Text="{Binding Number}" 
-                                                       TextColor="White" FontSize="18" FontAttributes="Bold"
-                                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                                            </Frame>
-
-                                            <!-- 選手情報 -->
-                                            <StackLayout Grid.Column="1" Grid.Row="0" VerticalOptions="Center">
-                                                <Label Text="{Binding Name}" 
-                                                       FontSize="16" FontAttributes="Bold" />
-                                                <StackLayout Orientation="Horizontal" Spacing="10">
-                                                    <Label Text="{Binding Position}" 
-                                                           FontSize="12" TextColor="Gray" />
-                                                    <Label Text="{Binding PreferredFoot}" 
-                                                           FontSize="12" TextColor="Gray" />
-                                                </StackLayout>
-                                            </StackLayout>
-
-                                            <!-- 編集ボタン -->
-                                            <Button Grid.Column="2" Grid.RowSpan="2" 
-                                                    Text="編集" 
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:PlayerManagementViewModel}}, Path=EditPlayerCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="#007ACC" 
-                                                    TextColor="White" 
-                                                    FontSize="12"
-                                                    CornerRadius="5" 
-                                                    WidthRequest="50" HeightRequest="35"
-                                                    VerticalOptions="Center" />
-
-                                            <!-- 削除ボタン -->
-                                            <Button Grid.Column="3" Grid.RowSpan="2" 
-                                                    Text="削除" 
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:PlayerManagementViewModel}}, Path=DeletePlayerCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="#F44336" 
-                                                    TextColor="White" 
-                                                    FontSize="12"
-                                                    CornerRadius="5" 
-                                                    WidthRequest="50" HeightRequest="35"
-                                                    VerticalOptions="Center" 
-                                                    Margin="5,0,0,0" />
-                                        </Grid>
-                                    </Frame>
-                                </Grid>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-
-                        <CollectionView.EmptyView>
-                            <StackLayout Padding="20">
-                                <Label Text="選手が登録されていません" 
-                                       FontSize="16" TextColor="Gray" 
-                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                                <Label Text="新規追加」ボタンで選手を追加してください" 
-                                       FontSize="14" TextColor="Gray" 
-                                       HorizontalOptions="Center" />
-                            </StackLayout>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
-                </RefreshView>
-            </StackLayout>
-        </Frame>
-
-        <!-- 選手編集・新規作成フォーム -->
-        <ScrollView Grid.Column="1">
-            <Frame BackgroundColor="White" HasShadow="True" CornerRadius="0" Padding="15">
-                <StackLayout Spacing="15">
-                    <Label Text="{Binding IsEditMode, Converter={StaticResource BoolToEditModeTextConverter}}" 
-                           FontSize="18" FontAttributes="Bold" />
-
-                    <!-- 選手画像 -->
-                    <StackLayout>
-                        <Label Text="選手画像" FontSize="14" FontAttributes="Bold" />
-                        <Frame BackgroundColor="#F5F5F5" HasShadow="False" CornerRadius="10" Padding="20" 
-                               HeightRequest="120">
-                            <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                                <Image Source="{Binding PlayerImagePath}" 
-                                       WidthRequest="80" HeightRequest="80" 
-                                       IsVisible="{Binding PlayerImagePath, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
-                                <Label Text="画像なし" 
-                                       FontSize="12" TextColor="Gray" 
-                                       IsVisible="{Binding PlayerImagePath, Converter={StaticResource IsNullOrEmptyConverter}}" />
-                            </StackLayout>
-                        </Frame>
-                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
-                            <Button Text="画像選択" 
-                                    Command="{Binding SelectImageCommand}"
-                                    BackgroundColor="#2196F3" 
-                                    TextColor="White" 
-                                    FontSize="12" />
-                            <Button Text="画像削除" 
-                                    Command="{Binding RemoveImageCommand}"
-                                    BackgroundColor="#F44336" 
-                                    TextColor="White" 
-                                    FontSize="12"
-                                    IsVisible="{Binding PlayerImagePath, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
-                        </StackLayout>
-                    </StackLayout>
-
-                    <!-- 選手名 -->
-                    <StackLayout>
-                        <Label Text="選手名" FontSize="14" FontAttributes="Bold" />
-                        <Entry Text="{Binding PlayerName}" 
-                               Placeholder="選手名を入力" />
-                    </StackLayout>
-
-                    <!-- 背番号 -->
-                    <StackLayout>
-                        <Label Text="背番号" FontSize="14" FontAttributes="Bold" />
-                        <Entry Text="{Binding PlayerNumber}" 
-                               Keyboard="Numeric" 
-                               Placeholder="1-99" />
-                    </StackLayout>
-
-                    <!-- ポジション -->
-                    <StackLayout>
-                        <Label Text="ポジション" FontSize="14" FontAttributes="Bold" />
-                        <Picker ItemsSource="{Binding PositionOptions}" 
-                                SelectedItem="{Binding PlayerPosition}" />
-                    </StackLayout>
-
-                    <!-- 利き足 -->
-                    <StackLayout>
-                        <Label Text="利き足" FontSize="14" FontAttributes="Bold" />
-                        <Picker ItemsSource="{Binding FootOptions}" 
-                                SelectedItem="{Binding PreferredFoot}" />
-                    </StackLayout>
-
-                    <!-- 操作ボタン -->
-                    <StackLayout Spacing="10" Margin="0,20,0,0">
-                        <Button Text="{Binding IsEditMode, Converter={StaticResource BoolToSaveButtonTextConverter}}" 
-                                Command="{Binding SavePlayerCommand}"
-                                BackgroundColor="#4CAF50" 
-                                TextColor="White" 
-                                HeightRequest="45" />
-
-                        <Button Text="キャンセル" 
-                                Command="{Binding CancelEditCommand}"
-                                BackgroundColor="#9E9E9E" 
-                                TextColor="White" 
-                                HeightRequest="45"
-                                IsVisible="{Binding IsEditMode}" />
-                    </StackLayout>
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="25"
+                            HeightRequest="50"
+                            Margin="0,15,0,0" />
                 </StackLayout>
             </Frame>
-        </ScrollView>
+
+            <!-- 選手一覧ヘッダー -->
+            <Label Grid.Row="1" Text="登録選手" FontSize="18" FontAttributes="Bold" 
+                   TextColor="#666" Margin="20,15,20,10" />
+
+            <!-- 選手一覧 - ScrollViewを使わずCollectionViewを直接配置 -->
+            <RefreshView Grid.Row="2" Command="{Binding LoadPlayersCommand}" IsRefreshing="{Binding IsBusy}" Margin="15,0">
+                <CollectionView ItemsSource="{Binding Players}" 
+                                ItemSizingStrategy="MeasureAllItems"
+                                BackgroundColor="Transparent">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="model:Player">
+                            <Grid Padding="0,5">
+                                <Frame BackgroundColor="White" HasShadow="True" CornerRadius="15" Padding="0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- 背番号円 -->
+                                        <Frame Grid.Column="0" 
+                                               BackgroundColor="#2196F3" 
+                                               WidthRequest="60" HeightRequest="60" 
+                                               CornerRadius="30" HasShadow="False" 
+                                               Margin="15" VerticalOptions="Center"
+                                               Padding="0">
+                                            <Label Text="{Binding Number}" 
+                                                   TextColor="White" FontSize="20" FontAttributes="Bold"
+                                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Frame>
+
+                                        <!-- 選手情報 -->
+                                        <StackLayout Grid.Column="1" VerticalOptions="Center" Spacing="5">
+                                            <Label Text="{Binding Name}" 
+                                                   FontSize="18" FontAttributes="Bold" 
+                                                   TextColor="#333" />
+                                            <StackLayout Orientation="Horizontal" Spacing="15">
+                                                <Frame BackgroundColor="#E3F2FD" Padding="8,4" CornerRadius="12" HasShadow="False">
+                                                    <Label Text="{Binding Position}" 
+                                                           FontSize="12" FontAttributes="Bold"
+                                                           TextColor="#1976D2" />
+                                                </Frame>
+                                                <Frame BackgroundColor="#F3E5F5" Padding="8,4" CornerRadius="12" HasShadow="False">
+                                                    <Label Text="{Binding PreferredFoot}" 
+                                                           FontSize="12" FontAttributes="Bold"
+                                                           TextColor="#7B1FA2" />
+                                                </Frame>
+                                            </StackLayout>
+                                        </StackLayout>
+
+                                        <!-- 編集ボタン -->
+                                        <Button Grid.Column="2" 
+                                                Text="編" 
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditPlayerCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="#007ACC" 
+                                                TextColor="White" 
+                                                FontSize="16" FontAttributes="Bold"
+                                                CornerRadius="20" 
+                                                WidthRequest="45" HeightRequest="45"
+                                                Margin="5,0"
+                                                VerticalOptions="Center" />
+
+                                        <!-- 削除ボタン -->
+                                        <Button Grid.Column="3" 
+                                                Text="削" 
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeletePlayerCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="#F44336" 
+                                                TextColor="White" 
+                                                FontSize="16" FontAttributes="Bold"
+                                                CornerRadius="20" 
+                                                WidthRequest="45" HeightRequest="45"
+                                                Margin="5,0,15,0"
+                                                VerticalOptions="Center" />
+                                    </Grid>
+                                </Frame>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <CollectionView.EmptyView>
+                        <StackLayout Padding="40" Spacing="15">
+                            <Frame BackgroundColor="#FFF3E0" HasShadow="False" CornerRadius="15" Padding="30">
+                                <StackLayout Spacing="10">
+                                    <Label Text="📋" FontSize="48" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="選手が登録されていません" 
+                                           FontSize="18" FontAttributes="Bold"
+                                           TextColor="#E65100"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="「新規選手登録」ボタンから\n選手を追加してください" 
+                                           FontSize="14" TextColor="#BF360C"
+                                           HorizontalOptions="Center" 
+                                           HorizontalTextAlignment="Center" />
+                                </StackLayout>
+                            </Frame>
+                        </StackLayout>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </RefreshView>
+
+            <!-- デバッグ情報表示エリア 
+            <Frame Grid.Row="3" BackgroundColor="#FFEBEE" HasShadow="False" CornerRadius="10" 
+                   IsVisible="{Binding ShowDebugInfo}" Padding="15" Margin="15,10,15,15">
+                <StackLayout>
+                    <Label Text="🐛 デバッグ情報" FontSize="14" FontAttributes="Bold" TextColor="#C62828" />
+                    <Label Text="{Binding DebugMessage}" FontSize="12" TextColor="#D32F2F" />
+                    <Label Text="{Binding LastErrorDetails}" FontSize="11" TextColor="#F44336" />
+                </StackLayout>
+            </Frame>
+            -->
+            
+        </Grid>
+
+        <!-- 全画面エディター -->
+        <Frame x:Name="EditorOverlay" 
+               BackgroundColor="White" 
+               HasShadow="True" 
+               CornerRadius="0"
+               IsVisible="{Binding ShowEditor}"
+               Padding="0">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- エディターヘッダー -->
+                <Frame Grid.Row="0" BackgroundColor="#2196F3" HasShadow="True" CornerRadius="0" Padding="20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" 
+                                Text="✕" 
+                                Command="{Binding CancelEditCommand}"
+                                Padding="0,0,0,1"
+                                BackgroundColor="Transparent" 
+                                TextColor="White" 
+                                FontSize="20" FontAttributes="Bold"
+                                WidthRequest="40" HeightRequest="40" />
+
+                        <Label Grid.Column="1" 
+                               Text="{Binding IsEditMode, Converter={StaticResource BoolToEditModeTextConverter}}" 
+                               FontSize="20" FontAttributes="Bold" 
+                               TextColor="White"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+
+                        <Button Grid.Column="2" 
+                                Text="✓" 
+                                Command="{Binding SavePlayerCommand}"
+                                BackgroundColor="#4CAF50" 
+                                Padding="0,0,0,1"
+                                TextColor="White" 
+                                FontSize="20" FontAttributes="Bold"
+                                CornerRadius="20"
+                                WidthRequest="40" HeightRequest="40" />
+                    </Grid>
+                </Frame>
+
+                <!-- エディター内容 -->
+                <ScrollView Grid.Row="1">
+                    <StackLayout Padding="20" Spacing="20">
+
+                        <!-- 選手画像セクション -->
+                        <Frame BackgroundColor="#F8F9FA" HasShadow="False" CornerRadius="15" Padding="20">
+                            <StackLayout Spacing="15">
+                                <Label Text="📸 選手画像" FontSize="16" FontAttributes="Bold" TextColor="#495057" />
+
+                                <Frame BackgroundColor="White" HasShadow="False" CornerRadius="15" Padding="20" 
+                                       HeightRequest="150">
+                                    <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
+                                        <Image Source="{Binding PlayerImagePath}" 
+                                               WidthRequest="100" HeightRequest="100" 
+                                               Aspect="AspectFill"
+                                               IsVisible="{Binding PlayerImagePath, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                                        <StackLayout IsVisible="{Binding PlayerImagePath, Converter={StaticResource IsNullOrEmptyConverter}}"
+                                                     HorizontalOptions="Center" VerticalOptions="Center">
+                                            <Label Text="📷" FontSize="40" TextColor="#ADB5BD" 
+                                                   HorizontalOptions="Center" />
+                                            <Label Text="画像なし" FontSize="14" TextColor="#6C757D" 
+                                                   HorizontalOptions="Center" />
+                                        </StackLayout>
+                                    </StackLayout>
+                                </Frame>
+
+                                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="15">
+                                    <Button Text="📁 選択" 
+                                            Command="{Binding SelectImageCommand}"
+                                            BackgroundColor="#17A2B8" 
+                                            TextColor="White" 
+                                            CornerRadius="20"
+                                            FontSize="14" Padding="20,10" />
+                                    <Button Text="🗑️削除" 
+                                            Command="{Binding RemoveImageCommand}"
+                                            BackgroundColor="#DC3545" 
+                                            TextColor="White" 
+                                            CornerRadius="20"
+                                            FontSize="14" Padding="20,10"
+                                            IsVisible="{Binding PlayerImagePath, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                                </StackLayout>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- 基本情報セクション -->
+                        <Frame BackgroundColor="#F8F9FA" HasShadow="False" CornerRadius="15" Padding="20">
+                            <StackLayout Spacing="20">
+                                <Label Text="ℹ️ 基本情報" FontSize="16" FontAttributes="Bold" TextColor="#495057" />
+
+                                <!-- 選手名 -->
+                                <StackLayout Spacing="8">
+                                    <Label Text="選手名 *" FontSize="14" FontAttributes="Bold" TextColor="#495057" />
+                                    <Frame BackgroundColor="White" HasShadow="False" CornerRadius="10" Padding="0">
+                                        <Entry Text="{Binding PlayerName}" 
+                                               Placeholder="選手名を入力してください" 
+                                               FontSize="16"
+                                               BackgroundColor="Transparent"
+                                               Margin="15,10" />
+                                    </Frame>
+                                </StackLayout>
+
+                                <!-- 背番号 -->
+                                <StackLayout Spacing="8">
+                                    <Label Text="背番号 (1-99) *" FontSize="14" FontAttributes="Bold" TextColor="#495057" />
+                                    <Frame BackgroundColor="White" HasShadow="False" CornerRadius="10" Padding="0">
+                                        <Entry Text="{Binding PlayerNumber}" 
+                                               Keyboard="Numeric" 
+                                               Placeholder="1"
+                                               FontSize="16"
+                                               BackgroundColor="Transparent"
+                                               Margin="15,10" />
+                                    </Frame>
+                                </StackLayout>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- 詳細情報セクション -->
+                        <Frame BackgroundColor="#F8F9FA" HasShadow="False" CornerRadius="15" Padding="20">
+                            <StackLayout Spacing="20">
+                                <Label Text="⚽ 詳細情報" FontSize="16" FontAttributes="Bold" TextColor="#495057" />
+
+                                <!-- ポジション -->
+                                <StackLayout Spacing="8">
+                                    <Label Text="ポジション" FontSize="14" FontAttributes="Bold" TextColor="#495057" />
+                                    <Frame BackgroundColor="White" HasShadow="False" CornerRadius="10" Padding="0">
+                                        <Picker ItemsSource="{Binding PositionOptions}" 
+                                                SelectedItem="{Binding PlayerPosition}"
+                                                FontSize="16"
+                                                BackgroundColor="Transparent"
+                                                Margin="15,10" />
+                                    </Frame>
+                                </StackLayout>
+
+                                <!-- 利き足 -->
+                                <StackLayout Spacing="8">
+                                    <Label Text="利き足" FontSize="14" FontAttributes="Bold" TextColor="#495057" />
+                                    <Frame BackgroundColor="White" HasShadow="False" CornerRadius="10" Padding="0">
+                                        <Picker ItemsSource="{Binding FootOptions}" 
+                                                SelectedItem="{Binding PreferredFoot}"
+                                                FontSize="16"
+                                                BackgroundColor="Transparent"
+                                                Margin="15,10" />
+                                    </Frame>
+                                </StackLayout>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- エラー表示エリア -->
+                        <Frame BackgroundColor="#F8D7DA" HasShadow="False" CornerRadius="10" 
+                               IsVisible="{Binding HasValidationError}" Padding="15">
+                            <StackLayout>
+                                <Label Text="⚠️ 入力エラー" FontSize="14" FontAttributes="Bold" TextColor="#721C24" />
+                                <Label Text="{Binding ValidationErrorMessage}" FontSize="12" TextColor="#842029" />
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- 追加の余白 -->
+                        <BoxView HeightRequest="20" BackgroundColor="Transparent" />
+                    </StackLayout>
+                </ScrollView>
+
+                <!-- エディターフッター（保存・キャンセル） -->
+                <Frame Grid.Row="2" BackgroundColor="White" HasShadow="True" CornerRadius="0" Padding="20">
+                    <StackLayout Orientation="Horizontal" Spacing="15">
+                        <Button Text="キャンセル" 
+                                Command="{Binding CancelEditCommand}"
+                                BackgroundColor="#6C757D" 
+                                TextColor="White" 
+                                FontSize="16" FontAttributes="Bold"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                HorizontalOptions="FillAndExpand" />
+
+                        <Button Text="{Binding IsEditMode, Converter={StaticResource BoolToSaveButtonTextConverter}}" 
+                                Command="{Binding SavePlayerCommand}"
+                                BackgroundColor="#28A745" 
+                                TextColor="White" 
+                                FontSize="16" FontAttributes="Bold"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                HorizontalOptions="FillAndExpand" />
+                    </StackLayout>
+                </Frame>
+            </Grid>
+        </Frame>
+
+        <!-- ローディングインジケーター -->
+        <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" 
+                           Color="#2196F3" VerticalOptions="Center" HorizontalOptions="Center"
+                           WidthRequest="50" HeightRequest="50" />
     </Grid>
 </ContentPage>
