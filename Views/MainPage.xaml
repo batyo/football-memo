@@ -10,15 +10,16 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <RefreshView Grid.Row="0" 
                      Command="{Binding GetMatchesCommand}"
                      IsRefreshing="{Binding IsBusy}">
-            <CollectionView ItemsSource="{Binding Matches}"
+            <CollectionView ItemsSource="{Binding MatchWrappers}"
                           SelectionMode="None">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="model:Match">
+                    <DataTemplate x:DataType="model:MatchWrapper">
                         <Grid Padding="15">
                             <Frame BackgroundColor="White"
                                    HasShadow="True"
@@ -30,27 +31,56 @@
                                 </Frame.GestureRecognizers>
 
                                 <Grid Padding="15">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0"
-                                           Text="{Binding Date, StringFormat='{0:yyyy/MM/dd}'}"
-                                           FontSize="18"
-                                           FontAttributes="Bold"
-                                           TextColor="Black" />
+                                    <!-- チェックボックス -->
+                                    <CheckBox Grid.Column="0"
+                                              IsVisible="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MainViewModel}}, Path=IsSelectionMode}"
+                                              IsChecked="{Binding IsSelected}"
+                                              VerticalOptions="Center"
+                                              Margin="0,0,10,0" />
 
-                                    <Label Grid.Row="1"
-                                           Text="{Binding Opponent, StringFormat='vs {0}'}"
-                                           FontSize="16"
-                                           TextColor="Gray" />
+                                    <Grid Grid.Column="1">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                    <Label Grid.Row="2"
-                                           Text="{Binding Stadium}"
-                                           FontSize="14"
-                                           TextColor="Gray" />
+                                        <Label Grid.Row="0"
+                                               Text="{Binding Date, StringFormat='{0:yyyy/MM/dd}'}"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="Black" />
+
+                                        <Label Grid.Row="1"
+                                               Text="{Binding Opponent, StringFormat='vs {0}'}"
+                                               FontSize="16"
+                                               TextColor="Gray" />
+
+                                        <Label Grid.Row="2"
+                                               Text="{Binding Stadium}"
+                                               FontSize="14"
+                                               TextColor="Gray" />
+                                    </Grid>
+
+                                    <!-- 選択モード開始ボタン（長押しの代替） -->
+                                    <Button Grid.Column="2"
+                                            Text="削除"
+                                            FontSize="12"
+                                            WidthRequest="60"
+                                            HeightRequest="35"
+                                            BackgroundColor="#ED1A3D"
+                                            TextColor="White"
+                                            CornerRadius="17"
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MainViewModel}}, Path=IsSelectionMode, Converter={StaticResource InverseBoolConverter}}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MainViewModel}}, Path=StartSelectionModeCommand}"
+                                            CommandParameter="{Binding .}"
+                                            VerticalOptions="Center" />
                                 </Grid>
                             </Frame>
                         </Grid>
@@ -68,31 +98,61 @@
                 </CollectionView.EmptyView>
             </CollectionView>
         </RefreshView>
-        
-        <!-- 選手管理ボタン -->
-        <Button Grid.Row="0"
-                Text="選手管理"
-                Command="{Binding GoToPlayerManagementCommand}"
-                BackgroundColor="#007ACC"
-                TextColor="White"
-                CornerRadius="25"
-                WidthRequest="100"
-                HeightRequest="50"
-                HorizontalOptions="Start"
-                VerticalOptions="End"
-                Margin="20" />
 
-        <!-- 新規作成ボタン -->
-        <Button Grid.Row="0"
-                Text="新規メモ"
-                Command="{Binding CreateNewMatchCommand}"
-                BackgroundColor="#007ACC"
-                TextColor="White"
-                CornerRadius="25"
-                WidthRequest="100"
-                HeightRequest="50"
-                HorizontalOptions="End"
-                VerticalOptions="End"
-                Margin="20" />
+        <!-- 削除モード時のボタン -->
+        <Grid Grid.Row="1" 
+              IsVisible="{Binding IsSelectionMode}"
+              BackgroundColor="#F0F0F0"
+              Padding="20,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Text="キャンセル"
+                    Command="{Binding CancelSelectionCommand}"
+                    BackgroundColor="#6C757D"
+                    TextColor="White"
+                    CornerRadius="25"
+                    HeightRequest="45" />
+
+            <Button Grid.Column="2"
+                    Text="削除"
+                    Command="{Binding DeleteSelectedMatchesCommand}"
+                    BackgroundColor="#DC3545"
+                    TextColor="White"
+                    CornerRadius="25"
+                    HeightRequest="45" />
+        </Grid>
+
+        <!-- 通常モードのボタン -->
+        <Grid Grid.Row="0" 
+              IsVisible="{Binding IsSelectionMode, Converter={StaticResource InverseBoolConverter}}">
+            <!-- 選手管理ボタン -->
+            <Button Text="選手管理"
+                    Command="{Binding GoToPlayerManagementCommand}"
+                    BackgroundColor="#007ACC"
+                    TextColor="White"
+                    CornerRadius="25"
+                    WidthRequest="100"
+                    HeightRequest="50"
+                    HorizontalOptions="Start"
+                    VerticalOptions="End"
+                    Margin="20" />
+
+            <!-- 新規作成ボタン -->
+            <Button Text="新規メモ"
+                    Command="{Binding CreateNewMatchCommand}"
+                    BackgroundColor="#007ACC"
+                    TextColor="White"
+                    CornerRadius="25"
+                    WidthRequest="100"
+                    HeightRequest="50"
+                    HorizontalOptions="End"
+                    VerticalOptions="End"
+                    Margin="20" />
+        </Grid>
     </Grid>
 </ContentPage>

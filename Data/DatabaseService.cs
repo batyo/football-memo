@@ -75,6 +75,43 @@ namespace MatchMemoApp.Data
             }
         }
 
+        // Match削除操作
+        public async Task<int> DeleteMatchAsync(int matchId)
+        {
+            await Init();
+
+            // 関連するメモも削除
+            await _database.ExecuteAsync("DELETE FROM Memos WHERE MatchId = ?", matchId);
+
+            // 関連するMatchPlayerも削除
+            await _database.ExecuteAsync("DELETE FROM MatchPlayers WHERE MatchId = ?", matchId);
+
+            // 試合自体を削除
+            return await _database.DeleteAsync<Match>(matchId);
+        }
+
+        // 複数のMatch削除操作
+        public async Task<int> DeleteMatchesAsync(List<int> matchIds)
+        {
+            await Init();
+
+            int deletedCount = 0;
+            foreach (var matchId in matchIds)
+            {
+                // 関連するメモも削除
+                await _database.ExecuteAsync("DELETE FROM Memos WHERE MatchId = ?", matchId);
+
+                // 関連するMatchPlayerも削除
+                await _database.ExecuteAsync("DELETE FROM MatchPlayers WHERE MatchId = ?", matchId);
+
+                // 試合自体を削除
+                await _database.DeleteAsync<Match>(matchId);
+                deletedCount++;
+            }
+
+            return deletedCount;
+        }
+
         // Player操作
         public async Task<List<Player>> GetPlayersAsync()
         {

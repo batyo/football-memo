@@ -11,7 +11,10 @@ namespace MatchMemoApp.ViewModels
     {
         private readonly DatabaseService _databaseService;
 
-        public ObservableCollection<Match> Matches { get; } = new();
+        public ObservableCollection<MatchWrapper> MatchWrappers { get; } = new();
+
+        [ObservableProperty]
+        private bool isSelectionMode = false;
 
         public MainViewModel(DatabaseService databaseService)
         {
@@ -30,11 +33,11 @@ namespace MatchMemoApp.ViewModels
                 IsBusy = true;
                 var matches = await _databaseService.GetMatchesAsync();
 
-                if (Matches.Count != 0)
-                    Matches.Clear();
+                if (MatchWrappers.Count != 0)
+                    MatchWrappers.Clear();
 
                 foreach (var match in matches)
-                    Matches.Add(match);
+                    MatchWrappers.Add(new MatchWrapper(match));
             }
             catch (Exception ex)
             {
@@ -64,13 +67,103 @@ namespace MatchMemoApp.ViewModels
         }
 
         [RelayCommand]
-        async Task GoToMatchAsync(Match match)
+        async Task GoToMatchAsync(MatchWrapper matchWrapper)
         {
-            if (match == null)
+            if (matchWrapper == null)
                 return;
 
-            await Shell.Current.GoToAsync($"{nameof(MatchDetailPage)}?MatchId={match.Id}");
+            // 選択モードの場合は選択/非選択を切り替え
+            if (IsSelectionMode)
+            {
+                matchWrapper.IsSelected = !matchWrapper.IsSelected;
+                return;
+            }
+
+            await Shell.Current.GoToAsync($"{nameof(MatchDetailPage)}?MatchId={matchWrapper.Match.Id}");
         }
+
+        [RelayCommand]
+        void StartSelectionMode(MatchWrapper matchWrapper)
+        {
+            IsSelectionMode = true;
+
+            // 全ての選択をクリア
+            foreach (var wrapper in MatchWrappers)
+            {
+                wrapper.IsSelected = false;
+            }
+
+            // 長押しされた項目を選択
+            if (matchWrapper != null)
+            {
+                matchWrapper.IsSelected = true;
+            }
+        }
+
+        [RelayCommand]
+        void CancelSelection()
+        {
+            IsSelectionMode = false;
+
+            // 全ての選択をクリア
+            foreach (var wrapper in MatchWrappers)
+            {
+                wrapper.IsSelected = false;
+            }
+        }
+
+        [RelayCommand]
+        async Task DeleteSelectedMatchesAsync()
+        {
+            var selectedMatches = MatchWrappers.Where(w => w.IsSelected).ToList();
+
+            if (selectedMatches.Count == 0)
+            {
+                await Shell.Current.DisplayAlert("エラー", "削除する試合が選択されていません。", "OK");
+                return;
+            }
+
+            string message = selectedMatches.Count == 1
+                ? "選択された試合を削除しますか？この操作は元に戻せません。"
+                : $"{selectedMatches.Count}件の試合を削除しますか？この操作は元に戻せません。";
+
+            bool confirmed = await Shell.Current.DisplayAlert("確認", message, "OK", "キャンセル");
+
+            if (!confirmed)
+                return;
+
+            try
+            {
+                IsBusy = true;
+
+                var matchIds = selectedMatches.Select(w => w.Match.Id).ToList();
+                await _databaseService.DeleteMatchesAsync(matchIds);
+
+                // UI更新
+                foreach (var matchWrapper in selectedMatches)
+                {
+                    MatchWrappers.Remove(matchWrapper);
+                }
+
+                CancelSelection();
+
+                string completionMessage = selectedMatches.Count == 1
+                    ? "試合を削除しました。"
+                    : $"{selectedMatches.Count}件の試合を削除しました。";
+
+                await Shell.Current.DisplayAlert("完了", completionMessage, "OK");
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("エラー", $"削除に失敗しました: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        public int SelectedCount => MatchWrappers.Count(w => w.IsSelected);
 
         public async Task OnAppearing()
         {
