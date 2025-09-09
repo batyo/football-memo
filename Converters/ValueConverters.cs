@@ -261,4 +261,38 @@ namespace MatchMemoApp.Converters
             throw new NotImplementedException();
         }
     }
+
+    public class BoolToPlayerEditorTitleConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isEditMode)
+            {
+                return isEditMode ? "選手情報編集" : "新規選手登録";
+            }
+            return "選手登録";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class FormationPlayerColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isHomeTeam)
+            {
+                return isHomeTeam ? Color.FromArgb("#2196F3") : Color.FromArgb("#F44336");
+            }
+            return Color.FromArgb("#2196F3");
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

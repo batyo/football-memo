@@ -1,5 +1,5 @@
 ﻿using MatchMemoApp.ViewModels;
-using Microsoft.Maui.Layouts;
+using Microsoft.Maui.Controls.Shapes;
 using System.Collections.Specialized;
 
 namespace MatchMemoApp.Views;
@@ -7,7 +7,8 @@ namespace MatchMemoApp.Views;
 public partial class NewMatchPage : ContentPage
 {
     private readonly NewMatchViewModel _viewModel;
-    private AbsoluteLayout fieldLayout;
+    private Grid? homeArea;
+    private Grid? awayArea;
 
     public NewMatchPage(NewMatchViewModel viewModel)
     {
@@ -15,99 +16,129 @@ public partial class NewMatchPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
 
-        // フィールドレイアウトの参照を取得
-        fieldLayout = this.FindByName<AbsoluteLayout>("FieldLayout");
+        // フィールドエリアの参照を取得
+        Loaded += OnPageLoaded;
+    }
+
+    private void OnPageLoaded(object? sender, EventArgs e)
+    {
+        homeArea = this.FindByName<Grid>("HomeArea");
+        awayArea = this.FindByName<Grid>("AwayArea");
 
         // コレクション変更の監視を設定
         SetupCollectionWatchers();
+
+        // 初期の選手配置を表示
+        RefreshPlayerDisplay();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         await _viewModel.OnAppearing();
-
-        // 初期の選手配置を表示
-        RefreshPlayerDisplay();
     }
 
     private void SetupCollectionWatchers()
     {
         // ホームチーム選手コレクションの変更を監視
         if (_viewModel.HomeTeamPlayers is INotifyCollectionChanged homeCollection)
-            homeCollection.CollectionChanged += OnHomePlayersChanged;
+            homeCollection.CollectionChanged += OnPlayersChanged;
 
         // アウェイチーム選手コレクションの変更を監視
         if (_viewModel.AwayTeamPlayers is INotifyCollectionChanged awayCollection)
-            awayCollection.CollectionChanged += OnAwayPlayersChanged;
+            awayCollection.CollectionChanged += OnPlayersChanged;
     }
 
-    private void OnHomePlayersChanged(object sender, NotifyCollectionChangedEventArgs e)
+    private void OnPlayersChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         RefreshPlayerDisplay();
     }
 
-    private void OnAwayPlayersChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-        RefreshPlayerDisplay();
-    }
-
+    /// <summary>
+    /// フィールド上の選手表示を更新
+    /// </summary>
     private void RefreshPlayerDisplay()
     {
-        if (fieldLayout == null || _viewModel == null) return;
+        if (homeArea == null || awayArea == null) return;
 
-        // 既存の選手要素をクリア（StyleIdを持つView要素のみを対象とする）
-        var playersToRemove = fieldLayout.Children
+        // 既存の選手アイコンをクリア
+        ClearPlayerIcons(homeArea);
+        ClearPlayerIcons(awayArea);
+
+        // ホームチーム選手を表示
+        foreach (var player in _viewModel.HomeTeamPlayers)
+        {
+            var playerView = CreatePlayerView(player);
+            AddPlayerToArea(homeArea, playerView, player.X, player.Y);
+        }
+
+        // アウェイチーム選手を表示
+        foreach (var player in _viewModel.AwayTeamPlayers)
+        {
+            var playerView = CreatePlayerView(player);
+            AddPlayerToArea(awayArea, playerView, player.X, player.Y);
+        }
+    }
+
+    /// <summary>
+    /// エリア内の選手アイコンをクリア
+    /// </summary>
+    private void ClearPlayerIcons(Grid area)
+    {
+        var playersToRemove = area.Children
             .OfType<View>()
-            .Where(c => c.StyleId == "Player")
+            .Where(v => v.StyleId == "PlayerIcon")
             .ToList();
 
         foreach (var player in playersToRemove)
         {
-            fieldLayout.Children.Remove(player);
-        }
-
-        // ホームチーム選手を追加
-        foreach (var fieldPlayer in _viewModel.HomeTeamPlayers)
-        {
-            var playerFrame = CreatePlayerFrame(fieldPlayer, Color.FromArgb("#2196F3"));
-            fieldLayout.Children.Add(playerFrame);
-
-            // 位置を設定（パーセンテージを比例値に変換）
-            var bounds = new Rect(fieldPlayer.X / 100.0, fieldPlayer.Y / 100.0, -1, -1);
-            AbsoluteLayout.SetLayoutBounds(playerFrame, bounds);
-            AbsoluteLayout.SetLayoutFlags(playerFrame, AbsoluteLayoutFlags.PositionProportional);
-        }
-
-        // アウェイチーム選手を追加
-        foreach (var fieldPlayer in _viewModel.AwayTeamPlayers)
-        {
-            var playerFrame = CreatePlayerFrame(fieldPlayer, Color.FromArgb("#F44336"));
-            fieldLayout.Children.Add(playerFrame);
-
-            // 位置を設定（パーセンテージを比例値に変換）
-            var bounds = new Rect(fieldPlayer.X / 100.0, fieldPlayer.Y / 100.0, -1, -1);
-            AbsoluteLayout.SetLayoutBounds(playerFrame, bounds);
-            AbsoluteLayout.SetLayoutFlags(playerFrame, AbsoluteLayoutFlags.PositionProportional);
+            area.Children.Remove(player);
         }
     }
 
-    private Frame CreatePlayerFrame(dynamic fieldPlayer, Color backgroundColor)
+    /// <summary>
+    /// 選手ビューを作成
+    /// </summary>
+    private View CreatePlayerView(FormationPlayer player)
     {
-        var frame = new Frame
+        var mainContainer = new StackLayout
         {
-            BackgroundColor = backgroundColor,
-            WidthRequest = 35,
-            HeightRequest = 35,
-            CornerRadius = 17.5f,
-            HasShadow = true,
-            Padding = 0,
-            StyleId = "Player" // 識別用
+            StyleId = "PlayerIcon",
+            Spacing = 2,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center
         };
 
-        var label = new Label
+        // 選手アイコン（円形）
+        var playerIcon = new Border
         {
-            Text = fieldPlayer.Player.Number.ToString(),
+            BackgroundColor = player.TeamColor,
+            WidthRequest = 35,
+            HeightRequest = 35,
+            StrokeThickness = 2,
+            Stroke = Colors.White,
+            StrokeShape = new RoundRectangle { CornerRadius = 17.5 },
+            HorizontalOptions = LayoutOptions.Center
+        };
+
+        // アイコン内容
+        var iconContent = new StackLayout
+        {
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center,
+            Spacing = 0
+        };
+
+        // 選手画像（低優先度機能のため後で実装）
+        if (!string.IsNullOrEmpty(player.ImagePath))
+        {
+            // TODO: 画像表示機能は低優先度で後から実装
+        }
+
+        // 背番号表示
+        var numberLabel = new Label
+        {
+            Text = player.DisplayNumber,
             TextColor = Colors.White,
             FontSize = 12,
             FontAttributes = FontAttributes.Bold,
@@ -115,49 +146,80 @@ public partial class NewMatchPage : ContentPage
             VerticalOptions = LayoutOptions.Center
         };
 
-        frame.Content = label;
+        iconContent.Children.Add(numberLabel);
+        playerIcon.Content = iconContent;
+        mainContainer.Children.Add(playerIcon);
 
-        // タップイベント（選手削除用）
+        // 選手名表示（設定済みの場合のみ）
+        if (player.IsConfigured && !string.IsNullOrEmpty(player.DisplayName))
+        {
+            var nameLabel = new Label
+            {
+                Text = player.DisplayName,
+                TextColor = Colors.White,
+                FontSize = 10,
+                FontAttributes = FontAttributes.Bold,
+                HorizontalOptions = LayoutOptions.Center,
+                BackgroundColor = Color.FromArgb("#80000000"), // 半透明背景
+                Padding = new Thickness(4, 1)
+            };
+
+            mainContainer.Children.Add(nameLabel);
+        }
+
+        // タップイベント（選手情報編集）
         var tapGesture = new TapGestureRecognizer();
         tapGesture.Tapped += (sender, e) =>
         {
-            _viewModel?.RemovePlayerFromFieldCommand?.Execute(fieldPlayer);
+            _viewModel.EditPlayerCommand.Execute(player);
         };
-        frame.GestureRecognizers.Add(tapGesture);
+        mainContainer.GestureRecognizers.Add(tapGesture);
 
-        return frame;
+        return mainContainer;
     }
 
-    private void OnHomeFormationChanged(object sender, EventArgs e)
+    /// <summary>
+    /// 選手をフィールドエリアに配置
+    /// </summary>
+    private void AddPlayerToArea(Grid area, View playerView, double xPercent, double yPercent)
     {
-        if (sender is Picker picker && picker.SelectedItem is string formation)
-        {
-            _viewModel.SetHomeTeamFormationCommand.Execute(formation);
-            // フォーメーション変更後に選手配置を更新
-            RefreshPlayerDisplay();
-        }
+        area.Children.Add(playerView);
+
+        // パーセンテージを比例値に変換して配置
+        // xPercent, yPercentは0-100の範囲
+        var proportionalX = xPercent / 100.0;
+        var proportionalY = yPercent / 100.0;
+
+        // Gridの比例配置を使用
+        playerView.HorizontalOptions = LayoutOptions.Start;
+        playerView.VerticalOptions = LayoutOptions.Start;
+        playerView.Margin = new Thickness(
+            proportionalX * (area.Width > 0 ? area.Width - 35 : 365), // アイコンサイズを考慮
+            proportionalY * (area.Height > 0 ? area.Height - 35 : 265),
+            0, 0);
     }
 
-    private void OnAwayFormationChanged(object sender, EventArgs e)
+    /// <summary>
+    /// フィールドサイズ変更時の再配置
+    /// </summary>
+    private void OnFieldSizeChanged(object? sender, EventArgs e)
     {
-        if (sender is Picker picker && picker.SelectedItem is string formation)
-        {
-            _viewModel.SetAwayTeamFormationCommand.Execute(formation);
-            // フォーメーション変更後に選手配置を更新
-            RefreshPlayerDisplay();
-        }
+        // フィールドサイズが変わった時に選手位置を再計算
+        RefreshPlayerDisplay();
     }
 
-    // リソースの解放
+    /// <summary>
+    /// リソースの解放
+    /// </summary>
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
 
-        // コレクション変更監視の解除
+        // イベント監視の解除
         if (_viewModel.HomeTeamPlayers is INotifyCollectionChanged homeCollection)
-            homeCollection.CollectionChanged -= OnHomePlayersChanged;
+            homeCollection.CollectionChanged -= OnPlayersChanged;
 
         if (_viewModel.AwayTeamPlayers is INotifyCollectionChanged awayCollection)
-            awayCollection.CollectionChanged -= OnAwayPlayersChanged;
+            awayCollection.CollectionChanged -= OnPlayersChanged;
     }
 }

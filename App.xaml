@@ -25,6 +25,8 @@
             <converters:PercentageToPixelYConverter x:Key="PercentageToPixelYConverter" />
             <converters:BoolToPlayPauseTextConverter x:Key="BoolToPlayPauseTextConverter" />
             <converters:PercentageToAbsoluteBoundsConverter x:Key="PercentageToAbsoluteBoundsConverter" />
+            <converters:BoolToPlayerEditorTitleConverter x:Key="BoolToPlayerEditorTitleConverter" />
+            <converters:FormationPlayerColorConverter x:Key="FormationPlayerColorConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
