@@ -150,6 +150,7 @@ namespace MatchMemoApp.ViewModels
 
         /// <summary>
         /// フォーメーションごとの選手位置を取得
+        /// 修正: ホームチーム（上半分）、アウェイチーム（下半分）の配置を正しく設定
         /// </summary>
         private List<FieldPosition> GetFormationPositions(string formation, bool isHome)
         {
@@ -213,13 +214,17 @@ namespace MatchMemoApp.ViewModels
                 }
             };
 
-            // アウェイチーム（上半分）の場合は上下反転
-            if (!isHome)
+            // 修正: ホームチーム（上半分）はそのまま、アウェイチーム（下半分）は上下反転
+            if (isHome)
             {
-                basePositions = basePositions.Select(p => new FieldPosition(p.X, 100 - p.Y)).ToList();
+                // ホームチーム: 上半分に配置（座標はそのまま）
+                return basePositions;
             }
-
-            return basePositions;
+            else
+            {
+                // アウェイチーム: 下半分に配置（上下反転）
+                return basePositions.Select(p => new FieldPosition(p.X, 100 - p.Y)).ToList();
+            }
         }
 
         /// <summary>
@@ -260,6 +265,7 @@ namespace MatchMemoApp.ViewModels
 
         /// <summary>
         /// 選手情報を保存
+        /// 修正: 各チーム内での背番号重複チェックに変更
         /// </summary>
         [RelayCommand]
         async Task SavePlayerInfo()
@@ -283,16 +289,17 @@ namespace MatchMemoApp.ViewModels
                 return;
             }
 
-            // 背番号の重複チェック
-            var allPlayers = HomeTeamPlayers.Concat(AwayTeamPlayers);
-            var duplicatePlayer = allPlayers.FirstOrDefault(p =>
+            // 修正: 同じチーム内での背番号重複チェック
+            var currentTeamPlayers = _currentEditingIsHome ? HomeTeamPlayers : AwayTeamPlayers;
+            var duplicatePlayer = currentTeamPlayers.FirstOrDefault(p =>
                 p != _currentEditingPlayer &&
                 p.IsConfigured &&
                 p.Number == number);
 
             if (duplicatePlayer != null)
             {
-                await Shell.Current.DisplayAlert("エラー", "この背番号は既に使用されています", "OK");
+                var teamName = _currentEditingIsHome ? HomeTeamName : AwayTeamName;
+                await Shell.Current.DisplayAlert("エラー", $"この背番号は既に{teamName}で使用されています", "OK");
                 return;
             }
 
@@ -304,6 +311,11 @@ namespace MatchMemoApp.ViewModels
                 _currentEditingPlayer.PreferredFoot = CurrentPlayerPreferredFoot;
                 _currentEditingPlayer.Height = int.TryParse(CurrentPlayerHeight, out int height) ? height : null;
                 _currentEditingPlayer.IsConfigured = true;
+
+                // 修正: プロパティ変更通知を明示的に発行
+                OnPropertyChanged(nameof(_currentEditingPlayer.IsConfigured));
+                OnPropertyChanged(nameof(_currentEditingPlayer.Name));
+                OnPropertyChanged(nameof(_currentEditingPlayer.Number));
             }
 
             IsPlayerEditorVisible = false;
@@ -487,6 +499,7 @@ namespace MatchMemoApp.ViewModels
 
     /// <summary>
     /// フォーメーション上の選手を表現するクラス
+    /// 修正: プロパティ変更通知を強化
     /// </summary>
     public partial class FormationPlayer : ObservableObject
     {
@@ -500,12 +513,16 @@ namespace MatchMemoApp.ViewModels
         bool isHomeTeam;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayNumber))]
+        [NotifyPropertyChangedFor(nameof(DisplayName))]
         bool isConfigured;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayName))]
         string? name;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayNumber))]
         int? number;
 
         [ObservableProperty]

@@ -84,6 +84,10 @@
                                        FontAttributes="Bold" 
                                        TextColor="#2196F3" 
                                        HorizontalOptions="Center" />
+                                <Label Text="（上半分）" 
+                                       FontSize="12" 
+                                       TextColor="#2196F3" 
+                                       HorizontalOptions="Center" />
                                 <Picker ItemsSource="{Binding FormationOptions}" 
                                         SelectedItem="{Binding HomeTeamFormation}"
                                         x:Name="HomeFormationPicker" />
@@ -93,6 +97,10 @@
                             <StackLayout Grid.Column="1">
                                 <Label Text="{Binding AwayTeamName}" 
                                        FontAttributes="Bold" 
+                                       TextColor="#F44336" 
+                                       HorizontalOptions="Center" />
+                                <Label Text="（下半分）" 
+                                       FontSize="12" 
                                        TextColor="#F44336" 
                                        HorizontalOptions="Center" />
                                 <Picker ItemsSource="{Binding FormationOptions}" 
@@ -112,6 +120,12 @@
                     <StackLayout Spacing="10">
                         <Label Text="フィールド配置" FontSize="18" FontAttributes="Bold" />
 
+                        <!-- 修正: 配置の説明を明確化 -->
+                        <Label Text="ホームチーム（青）は上半分、アウェイチーム（赤）は下半分に配置されます" 
+                               FontSize="12" 
+                               TextColor="Gray" 
+                               HorizontalOptions="Center" />
+
                         <!-- 縦向きフィールド -->
                         <Border BackgroundColor="#2E7D32" 
                                 StrokeThickness="2" 
@@ -123,22 +137,30 @@
 
                             <Grid x:Name="FieldGrid">
                                 <Grid.RowDefinitions>
+                                    <!-- 修正: ホームチーム（上）、アウェイチーム（下）の配置 -->
                                     <RowDefinition Height="*" />
-                                    <!-- アウェイ側 -->
+                                    <!-- ホーム側（上半分） -->
                                     <RowDefinition Height="2" />
                                     <!-- ハーフライン -->
                                     <RowDefinition Height="*" />
-                                    <!-- ホーム側 -->
+                                    <!-- アウェイ側（下半分） -->
                                 </Grid.RowDefinitions>
 
-                                <!-- アウェイ側エリア -->
-                                <Grid Grid.Row="0" x:Name="AwayArea">
-                                    <Label Text="{Binding AwayTeamName}" 
-                                           TextColor="White" 
+                                <!-- 修正: ホーム側エリア（上半分） -->
+                                <Grid Grid.Row="0" x:Name="HomeArea">
+                                    <Label Text="{Binding HomeTeamName}" 
+                                           TextColor="#87CEEB" 
                                            FontAttributes="Bold"
+                                           FontSize="14"
                                            VerticalOptions="Start" 
                                            HorizontalOptions="Center" 
                                            Margin="0,10,0,0" />
+                                    <Label Text="ホーム" 
+                                           TextColor="#87CEEB" 
+                                           FontSize="10"
+                                           VerticalOptions="Start" 
+                                           HorizontalOptions="Center" 
+                                           Margin="0,30,0,0" />
                                 </Grid>
 
                                 <!-- ハーフライン -->
@@ -146,11 +168,18 @@
                                          Color="White" 
                                          HeightRequest="2" />
 
-                                <!-- ホーム側エリア -->
-                                <Grid Grid.Row="2" x:Name="HomeArea">
-                                    <Label Text="{Binding HomeTeamName}" 
-                                           TextColor="White" 
+                                <!-- 修正: アウェイ側エリア（下半分） -->
+                                <Grid Grid.Row="2" x:Name="AwayArea">
+                                    <Label Text="{Binding AwayTeamName}" 
+                                           TextColor="#FFB6C1" 
                                            FontAttributes="Bold"
+                                           FontSize="14"
+                                           VerticalOptions="End" 
+                                           HorizontalOptions="Center" 
+                                           Margin="0,0,0,30" />
+                                    <Label Text="アウェイ" 
+                                           TextColor="#FFB6C1" 
+                                           FontSize="10"
                                            VerticalOptions="End" 
                                            HorizontalOptions="Center" 
                                            Margin="0,0,0,10" />
@@ -166,7 +195,7 @@
                                          HorizontalOptions="Center"
                                          VerticalOptions="Center" />
 
-                                <!-- ペナルティエリア（上） -->
+                                <!-- ペナルティエリア（上：ホーム側） -->
                                 <Rectangle Grid.Row="0"
                                            Stroke="White"
                                            StrokeThickness="2"
@@ -177,7 +206,7 @@
                                            VerticalOptions="Start"
                                            Margin="0,0,0,0" />
 
-                                <!-- ペナルティエリア（下） -->
+                                <!-- ペナルティエリア（下：アウェイ側） -->
                                 <Rectangle Grid.Row="2"
                                            Stroke="White"
                                            StrokeThickness="2"
@@ -187,29 +216,63 @@
                                            HorizontalOptions="Center"
                                            VerticalOptions="End"
                                            Margin="0,0,0,0" />
+
+                                <!-- ゴールエリア（上：ホーム側） -->
+                                <Rectangle Grid.Row="0"
+                                           Stroke="White"
+                                           StrokeThickness="1"
+                                           Fill="Transparent"
+                                           WidthRequest="80"
+                                           HeightRequest="30"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Start"
+                                           Margin="0,0,0,0" />
+
+                                <!-- ゴールエリア（下：アウェイ側） -->
+                                <Rectangle Grid.Row="2"
+                                           Stroke="White"
+                                           StrokeThickness="1"
+                                           Fill="Transparent"
+                                           WidthRequest="80"
+                                           HeightRequest="30"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="End"
+                                           Margin="0,0,0,0" />
                             </Grid>
                         </Border>
 
                         <!-- チームカラー凡例 -->
                         <StackLayout Orientation="Horizontal" 
                                      HorizontalOptions="Center" 
-                                     Spacing="20" 
+                                     Spacing="30" 
                                      Margin="0,10,0,0">
-                            <StackLayout Orientation="Horizontal" Spacing="5">
+                            <StackLayout Orientation="Horizontal" Spacing="8">
                                 <Ellipse Fill="#2196F3" 
-                                         WidthRequest="20" 
-                                         HeightRequest="20" />
-                                <Label Text="{Binding HomeTeamName}" 
-                                       VerticalOptions="Center"
-                                       FontSize="12" />
+                                         WidthRequest="24" 
+                                         HeightRequest="24" />
+                                <StackLayout Spacing="2">
+                                    <Label Text="{Binding HomeTeamName}" 
+                                           VerticalOptions="Center"
+                                           FontSize="13"
+                                           FontAttributes="Bold" />
+                                    <Label Text="（上半分）" 
+                                           FontSize="10"
+                                           TextColor="Gray" />
+                                </StackLayout>
                             </StackLayout>
-                            <StackLayout Orientation="Horizontal" Spacing="5">
+                            <StackLayout Orientation="Horizontal" Spacing="8">
                                 <Ellipse Fill="#F44336" 
-                                         WidthRequest="20" 
-                                         HeightRequest="20" />
-                                <Label Text="{Binding AwayTeamName}" 
-                                       VerticalOptions="Center"
-                                       FontSize="12" />
+                                         WidthRequest="24" 
+                                         HeightRequest="24" />
+                                <StackLayout Spacing="2">
+                                    <Label Text="{Binding AwayTeamName}" 
+                                           VerticalOptions="Center"
+                                           FontSize="13"
+                                           FontAttributes="Bold" />
+                                    <Label Text="（下半分）" 
+                                           FontSize="10"
+                                           TextColor="Gray" />
+                                </StackLayout>
                             </StackLayout>
                         </StackLayout>
 
@@ -237,10 +300,15 @@
                                    FontAttributes="Bold" 
                                    TextColor="#2196F3"
                                    HorizontalOptions="Center" />
+                            <Label Text="（上半分）" 
+                                   FontSize="12" 
+                                   TextColor="#2196F3"
+                                   HorizontalOptions="Center" />
                             <Label Text="{Binding HomeTeamPlayers.Count, StringFormat='{0}/11 選手'}" 
                                    HorizontalOptions="Center" 
                                    TextColor="#2196F3" 
-                                   FontSize="16" />
+                                   FontSize="16"
+                                   FontAttributes="Bold" />
                         </StackLayout>
 
                         <StackLayout Grid.Column="1" HorizontalOptions="Center">
@@ -248,10 +316,15 @@
                                    FontAttributes="Bold" 
                                    TextColor="#F44336"
                                    HorizontalOptions="Center" />
+                            <Label Text="（下半分）" 
+                                   FontSize="12" 
+                                   TextColor="#F44336"
+                                   HorizontalOptions="Center" />
                             <Label Text="{Binding AwayTeamPlayers.Count, StringFormat='{0}/11 選手'}" 
                                    HorizontalOptions="Center" 
                                    TextColor="#F44336" 
-                                   FontSize="16" />
+                                   FontSize="16"
+                                   FontAttributes="Bold" />
                         </StackLayout>
                     </Grid>
                 </Border>
@@ -335,6 +408,9 @@
                                    Keyboard="Numeric"
                                    ClearButtonVisibility="WhileEditing"
                                    MaxLength="2" />
+                            <Label Text="※同じチーム内で重複しない番号を入力してください" 
+                                   FontSize="10" 
+                                   TextColor="Gray" />
                         </StackLayout>
 
                         <StackLayout Spacing="10">

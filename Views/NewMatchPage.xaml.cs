@@ -1,6 +1,7 @@
 ﻿using MatchMemoApp.ViewModels;
 using Microsoft.Maui.Controls.Shapes;
 using System.Collections.Specialized;
+using System.ComponentModel;
 
 namespace MatchMemoApp.Views;
 
@@ -47,11 +48,60 @@ public partial class NewMatchPage : ContentPage
         // アウェイチーム選手コレクションの変更を監視
         if (_viewModel.AwayTeamPlayers is INotifyCollectionChanged awayCollection)
             awayCollection.CollectionChanged += OnPlayersChanged;
+
+        // 修正: 個々の選手のプロパティ変更も監視
+        foreach (var player in _viewModel.HomeTeamPlayers)
+        {
+            player.PropertyChanged += OnPlayerPropertyChanged;
+        }
+
+        foreach (var player in _viewModel.AwayTeamPlayers)
+        {
+            player.PropertyChanged += OnPlayerPropertyChanged;
+        }
     }
 
     private void OnPlayersChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        // 新しく追加された選手のプロパティ変更も監視
+        if (e.NewItems != null)
+        {
+            foreach (FormationPlayer player in e.NewItems)
+            {
+                player.PropertyChanged += OnPlayerPropertyChanged;
+            }
+        }
+
+        // 削除された選手の監視を解除
+        if (e.OldItems != null)
+        {
+            foreach (FormationPlayer player in e.OldItems)
+            {
+                player.PropertyChanged -= OnPlayerPropertyChanged;
+            }
+        }
+
         RefreshPlayerDisplay();
+    }
+
+    /// <summary>
+    /// 修正: 選手プロパティ変更時の即座更新
+    /// </summary>
+    private void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // 表示に影響するプロパティが変更された場合、即座に更新
+        if (e.PropertyName == nameof(FormationPlayer.IsConfigured) ||
+            e.PropertyName == nameof(FormationPlayer.Name) ||
+            e.PropertyName == nameof(FormationPlayer.Number) ||
+            e.PropertyName == nameof(FormationPlayer.DisplayNumber) ||
+            e.PropertyName == nameof(FormationPlayer.DisplayName))
+        {
+            // メインスレッドで実行を保証
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                RefreshPlayerDisplay();
+            });
+        }
     }
 
     /// <summary>
@@ -61,22 +111,30 @@ public partial class NewMatchPage : ContentPage
     {
         if (homeArea == null || awayArea == null) return;
 
-        // 既存の選手アイコンをクリア
-        ClearPlayerIcons(homeArea);
-        ClearPlayerIcons(awayArea);
-
-        // ホームチーム選手を表示
-        foreach (var player in _viewModel.HomeTeamPlayers)
+        try
         {
-            var playerView = CreatePlayerView(player);
-            AddPlayerToArea(homeArea, playerView, player.X, player.Y);
+            // 既存の選手アイコンをクリア
+            ClearPlayerIcons(homeArea);
+            ClearPlayerIcons(awayArea);
+
+            // ホームチーム選手を表示
+            foreach (var player in _viewModel.HomeTeamPlayers)
+            {
+                var playerView = CreatePlayerView(player);
+                AddPlayerToArea(homeArea, playerView, player.X, player.Y);
+            }
+
+            // アウェイチーム選手を表示
+            foreach (var player in _viewModel.AwayTeamPlayers)
+            {
+                var playerView = CreatePlayerView(player);
+                AddPlayerToArea(awayArea, playerView, player.X, player.Y);
+            }
         }
-
-        // アウェイチーム選手を表示
-        foreach (var player in _viewModel.AwayTeamPlayers)
+        catch (Exception ex)
         {
-            var playerView = CreatePlayerView(player);
-            AddPlayerToArea(awayArea, playerView, player.X, player.Y);
+            // エラーログ出力（デバッグ用）
+            System.Diagnostics.Debug.WriteLine($"RefreshPlayerDisplay Error: {ex.Message}");
         }
     }
 
@@ -98,6 +156,7 @@ public partial class NewMatchPage : ContentPage
 
     /// <summary>
     /// 選手ビューを作成
+    /// 修正: リアルタイム更新に対応
     /// </summary>
     private View CreatePlayerView(FormationPlayer player)
     {
@@ -210,6 +269,7 @@ public partial class NewMatchPage : ContentPage
 
     /// <summary>
     /// リソースの解放
+    /// 修正: プロパティ変更監視の解除を追加
     /// </summary>
     protected override void OnDisappearing()
     {
@@ -221,5 +281,16 @@ public partial class NewMatchPage : ContentPage
 
         if (_viewModel.AwayTeamPlayers is INotifyCollectionChanged awayCollection)
             awayCollection.CollectionChanged -= OnPlayersChanged;
+
+        // 個々の選手のプロパティ変更監視も解除
+        foreach (var player in _viewModel.HomeTeamPlayers)
+        {
+            player.PropertyChanged -= OnPlayerPropertyChanged;
+        }
+
+        foreach (var player in _viewModel.AwayTeamPlayers)
+        {
+            player.PropertyChanged -= OnPlayerPropertyChanged;
+        }
     }
 }
